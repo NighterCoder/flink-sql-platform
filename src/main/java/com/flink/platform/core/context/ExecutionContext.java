@@ -1,30 +1,48 @@
 package com.flink.platform.core.context;
 
 import com.flink.platform.core.config.Environment;
+import com.flink.platform.core.config.entries.DeploymentEntry;
+import com.flink.platform.core.exception.SqlExecutionException;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.client.ClientUtils;
+import org.apache.flink.client.cli.CliArgsException;
 import org.apache.flink.client.cli.CustomCommandLine;
+import org.apache.flink.client.cli.ExecutionConfigAccessor;
+import org.apache.flink.client.cli.ProgramOptions;
 import org.apache.flink.client.deployment.ClusterClientFactory;
 import org.apache.flink.client.deployment.ClusterClientServiceLoader;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.FunctionCatalog;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.delegation.Executor;
+import org.apache.flink.table.delegation.ExecutorFactory;
+import org.apache.flink.table.factories.ComponentFactory;
+import org.apache.flink.table.factories.ComponentFactoryService;
 import org.apache.flink.table.module.ModuleManager;
 import org.apache.flink.util.FlinkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.apache.flink.util.Preconditions.checkNotNull;
+import static org.apache.flink.util.Preconditions.checkState;
 
 /**
  * Context for executing table programs. This class caches everything that can be cached across
@@ -73,9 +91,88 @@ public class ExecutionContext<ClusterID> {
                 flinkConfig
         );
 
+        // 初始化TableEnvironment
+        initializeTableEnvironment(sessionState);
+
+        LOG.debug("Deployment descriptor: {}", environment.getDeployment());
+        final CommandLine commandLine=createCommandLine(
+                environment.getDeployment(),
+                commandLineOptions);
 
 
 
+
+        // ClusterClientFactory初始化
+        final ClusterClientServiceLoader serviceLoader = checkNotNull(clusterClientServiceLoader);
+        clusterClientFactory = serviceLoader.getClusterClientFactory(flinkConfig);
+        checkState(clusterClientFactory != null);
+    }
+
+
+    private static Configuration createExecutionConfig(
+            CommandLine commandLine,
+            Options commandLineOptions,
+            List<CustomCommandLine> availableCommandLines,
+            List<URL> dependencies) throws FlinkException {
+        LOG.debug("Available commandline options: {}", commandLineOptions);
+        List<String> options = Stream
+                .of(commandLine.getOptions())
+                .map(o -> o.getOpt() + "=" + o.getValue())
+                .collect(Collectors.toList());
+        LOG.debug(
+                "Instantiated commandline args: {}, options: {}",
+                commandLine.getArgList(),
+                options);
+
+        // 获取可用的命令行配置命令
+        final CustomCommandLine activeCommandLine = findActiveCommandLine(
+                availableCommandLines,
+                commandLine);
+
+        LOG.debug(
+                "Available commandlines: {}, active commandline: {}",
+                availableCommandLines,
+                activeCommandLine);
+
+        // 将命令行参数转为配置项Configuration
+        Configuration executionConfig = activeCommandLine.toConfiguration(
+                commandLine);
+
+        try {
+            final ProgramOptions programOptions = ProgramOptions.create(commandLine);
+            final ExecutionConfigAccessor executionConfigAccessor = ExecutionConfigAccessor
+                    .fromProgramOptions(programOptions, dependencies);
+            executionConfigAccessor.applyToConfiguration(executionConfig);
+        } catch (CliArgsException e) {
+            throw new SqlExecutionException("Invalid deployment run options.", e);
+        }
+
+        LOG.info("Executor config: {}", executionConfig);
+        return executionConfig;
+    }
+
+
+    /**
+     * 获取可用的命令行配置参数
+     * @param availableCommandLines
+     * @param commandLine
+     */
+    private static CustomCommandLine findActiveCommandLine(List<CustomCommandLine> availableCommandLines,
+                                                           CommandLine commandLine) {
+        for (CustomCommandLine cli : availableCommandLines) {
+            if (cli.isActive(commandLine)) {
+                return cli;
+            }
+        }
+        throw new SqlExecutionException("Could not find a matching deployment.");
+    }
+
+    private static CommandLine createCommandLine(DeploymentEntry deploymentEntry,Options commandLineOptions){
+        try{
+            return deploymentEntry.getCommandLine(commandLineOptions);
+        } catch (Exception e) {
+            throw new SqlExecutionException("Invalid deployment options.", e);
+        }
     }
 
     private void initializeTableEnvironment(@Nullable SessionState sessionState){
@@ -132,14 +229,69 @@ public class ExecutionContext<ClusterID> {
             FunctionCatalog functionCatalog){
         // 流处理: 初始化流处理执行环境;批处理执行环境为null
         if(environment.getExecution().isStreamingPlanner()){
-            streamExecEnv = 
-        }
+            streamExecEnv = createStreamExecutionEnvironment();
+            execEnv = null;
 
+            final Map<String,String> executorProperties=settings.toExecutorProperties();
+
+
+
+
+        }
+    }
+
+
+    /**
+     *
+     * @param executorProperties
+     * @param executionEnvironment
+     */
+    private static Executor lookupExecutor(Map<String,String> executorProperties,
+                                           StreamExecutionEnvironment executionEnvironment){
+        try {
+            ExecutorFactory executorFactory = ComponentFactoryService.find(ExecutorFactory.class, executorProperties);
+            Method createMethod =executorFactory.getClass().getMethod("create", Map.class, StreamExecutionEnvironment.class);
+
+            return (Executor) createMethod.invoke(executorFactory,
+                    executorProperties,
+                    executionEnvironment);
+        }catch (Exception e){
+            throw new TableException(
+                    "Could not instantiate the executor. Make sure a planner module is on the classpath",
+                    e);
+        }
 
 
     }
 
+    /**
+     * 创建批处理执行环境
+     */
+    private ExecutionEnvironment createExecutionEnvironment() {
+        final ExecutionEnvironment execEnv = ExecutionEnvironment.getExecutionEnvironment();
+        execEnv.setRestartStrategy(environment.getExecution().getRestartStrategy());
+        if(environment.getExecution().getParallelism().isPresent()) {
+            execEnv.setParallelism(environment.getExecution().getParallelism().get());
+        }
+        return execEnv;
+    }
 
+    /**
+     * 创建流处理执行环境
+     */
+    private StreamExecutionEnvironment createStreamExecutionEnvironment() {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setRestartStrategy(environment.getExecution().getRestartStrategy());
+        if (environment.getExecution().getParallelism().isPresent()) {
+            env.setParallelism(environment.getExecution().getParallelism().get());
+        }
+        env.setMaxParallelism(environment.getExecution().getMaxParallelism());
+        env.setStreamTimeCharacteristic(environment.getExecution().getTimeCharacteristic());
+        if (env.getStreamTimeCharacteristic() == TimeCharacteristic.EventTime) {
+            env.getConfig().setAutoWatermarkInterval(environment.getExecution().getPeriodicWatermarksInterval());
+        }
+        return env;
+    }
 
     /** Represents the state that should be reused in one session. **/
     public static class SessionState{
