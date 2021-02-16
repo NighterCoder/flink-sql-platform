@@ -3,7 +3,7 @@ package com.flink.platform.core.operation;
 import com.flink.platform.core.rest.result.ResultSet;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
-import org.apache.flink.table.operations.Operation;
+
 
 import java.util.Optional;
 

@@ -33,6 +33,18 @@ public class Session {
         this.jobOperations = new ConcurrentHashMap<>();
     }
 
+    public void touch() {
+        lastVisitedTime = System.currentTimeMillis();
+    }
+
+    public long getLastVisitedTime() {
+        return lastVisitedTime;
+    }
+
+    public SessionContext getContext() {
+        return context;
+    }
+
 
 
 

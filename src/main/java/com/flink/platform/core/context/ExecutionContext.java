@@ -14,6 +14,7 @@ import org.apache.flink.client.cli.ExecutionConfigAccessor;
 import org.apache.flink.client.cli.ProgramOptions;
 import org.apache.flink.client.deployment.ClusterClientFactory;
 import org.apache.flink.client.deployment.ClusterClientServiceLoader;
+import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -164,6 +165,18 @@ public class ExecutionContext<ClusterID> {
         LOG.info("Executor config: {}", executionConfig);
         return executionConfig;
     }
+
+
+    /**
+     * 获取ClusterDescriptor
+     * @param conf
+     */
+    public ClusterDescriptor<ClusterID> createClusterDescriptor(Configuration conf){
+        return clusterClientFactory.createClusterDescriptor(conf);
+    }
+
+
+
 
 
     /**
@@ -700,6 +713,8 @@ public class ExecutionContext<ClusterID> {
         }
     }
 
-
+    public ClusterClientFactory<ClusterID> getClusterClientFactory() {
+        return clusterClientFactory;
+    }
 
 }
