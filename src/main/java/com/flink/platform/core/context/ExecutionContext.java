@@ -621,4 +621,85 @@ public class ExecutionContext<ClusterID> {
 
     }
 
+    /**
+     * 建造者模式
+     */
+    /** Returns a builder for this {@link ExecutionContext}. */
+    public static Builder builder(
+            Environment defaultEnv,
+            Environment sessionEnv,
+            List<URL> dependencies,
+            Configuration configuration,
+            ClusterClientServiceLoader serviceLoader,
+            Options commandLineOptions,
+            List<CustomCommandLine> commandLines) {
+        return new Builder(defaultEnv, sessionEnv, dependencies, configuration,
+                serviceLoader, commandLineOptions, commandLines);
+    }
+
+    /**
+     * 内部类
+     */
+    public static class Builder{
+        private final Environment sessionEnv;;
+        private final List<URL> dependencies;
+        private final Configuration configuration;
+        private final ClusterClientServiceLoader serviceLoader;
+        private final Options commandLineOptions;
+        private final List<CustomCommandLine> commandLines;
+
+        private Environment defaultEnv;
+        private Environment currentEnv;
+
+        // Optional members
+        private SessionState sessionState;
+
+        private Builder(
+                Environment defaultEnv,
+                @Nullable Environment sessionEnv,
+                List<URL> dependencies,
+                Configuration configuration,
+                ClusterClientServiceLoader serviceLoader,
+                Options commandLineOptions,
+                List<CustomCommandLine> commandLines) {
+            this.defaultEnv = defaultEnv;
+            this.sessionEnv = sessionEnv;
+            this.dependencies = dependencies;
+            this.configuration = configuration;
+            this.serviceLoader = serviceLoader;
+            this.commandLineOptions = commandLineOptions;
+            this.commandLines = commandLines;
+        }
+
+        public Builder env(Environment environment) {
+            this.currentEnv = environment;
+            return this;
+        }
+
+        public Builder sessionState(SessionState sessionState) {
+            this.sessionState = sessionState;
+            return this;
+        }
+
+        public ExecutionContext<?> build(){
+            try{
+                return new ExecutionContext<>(
+                        this.currentEnv==null?
+                                Environment.merge(defaultEnv,sessionEnv):this.currentEnv,
+                        this.sessionState,
+                        this.dependencies,
+                        this.configuration,
+                        this.serviceLoader,
+                        this.commandLineOptions,
+                        this.commandLines
+                );
+            }catch (Throwable t) {
+                // catch everything such that a configuration does not crash the executor
+                throw new SqlExecutionException("Could not create execution context.", t);
+            }
+        }
+    }
+
+
+
 }
