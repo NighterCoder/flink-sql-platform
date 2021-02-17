@@ -1,6 +1,7 @@
 package com.flink.platform.web.controller;
 
 import com.flink.platform.web.common.Result;
+import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.service.FlinkJobService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,15 @@ public class FlinkJobController {
 
     @Autowired
     private FlinkJobService flinkJobService;
+
+    @PostMapping("/session/create")
+    public Result createSession(FlinkSessionCreateParam param){
+        String sessionId=flinkJobService.createSession(param);
+
+        return null;
+    }
+
+
 
     @PostMapping("/sql/submit")
     public Result submit(String sql){

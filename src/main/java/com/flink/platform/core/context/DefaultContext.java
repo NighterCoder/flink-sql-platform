@@ -22,6 +22,9 @@ import java.util.Objects;
  */
 public class DefaultContext {
 
+    /**
+     * 这里的默认env是读取sql-platform-defaults.yaml获取
+     */
     private final Environment defaultEnv;
     private final List<URL> dependencies;
     private final Configuration flinkConfig;

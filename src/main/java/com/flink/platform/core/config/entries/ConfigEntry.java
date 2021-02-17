@@ -18,8 +18,8 @@
 
 package com.flink.platform.core.config.entries;
 
+import com.flink.platform.core.exception.SqlPlatformException;
 import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.client.SqlClientException;
 import org.apache.flink.table.descriptors.DescriptorProperties;
 
 import java.util.Map;
@@ -38,7 +38,7 @@ abstract class ConfigEntry {
         try {
             validate(properties);
         } catch (ValidationException e) {
-            throw new SqlClientException("Invalid configuration entry.", e);
+            throw new SqlPlatformException("Invalid configuration entry.", e);
         }
 
         this.properties = properties;

@@ -18,8 +18,8 @@
 
 package com.flink.platform.core.config.entries;
 
-import org.apache.flink.table.client.SqlClientException;
-import org.apache.flink.table.client.config.ConfigUtil;
+import com.flink.platform.core.config.ConfigUtil;
+import com.flink.platform.core.exception.SqlPlatformException;
 import org.apache.flink.table.descriptors.DescriptorProperties;
 
 import java.util.Arrays;
@@ -98,7 +98,7 @@ public abstract class TableEntry extends ConfigEntry {
             case TABLES_TYPE_VALUE_TEMPORAL_TABLE:
                 return new TemporalTableEntry(name, cleanedProperties);
             default:
-                throw new SqlClientException("Unexpected table type.");
+                throw new SqlPlatformException("Unexpected table type.");
         }
     }
 }
