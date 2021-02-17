@@ -5,8 +5,11 @@ import com.flink.platform.core.config.entries.ExecutionEntry;
 import com.flink.platform.core.context.DefaultContext;
 import com.flink.platform.core.context.SessionContext;
 import com.flink.platform.core.exception.SqlPlatformException;
+import com.flink.platform.web.config.FlinkConfProperties;
+import org.apache.flink.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,6 +22,9 @@ import java.util.concurrent.*;
 public class FlinkSessionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(FlinkSessionManager.class);
+
+    @Autowired
+    private FlinkConfProperties flinkConfProperties;
 
     private final DefaultContext defaultContext;
 
@@ -40,14 +46,15 @@ public class FlinkSessionManager {
         this.sessions = new ConcurrentHashMap<>();
     }
 
+    //todo
     public void open() {
         if (checkInterval > 0 && idleTimeout > 0) {
             executorService = Executors.newSingleThreadScheduledExecutor();
             timeoutCheckerFuture = executorService.scheduleAtFixedRate(() -> {
                 LOG.info("Start to remove expired session, current session count: {}", sessions.size());
-                for(Map.Entry<String,Session> entry:sessions.entrySet()){
-                    String sessionId=entry.getKey();
-                    Session session=entry.getValue();
+                for (Map.Entry<String, Session> entry : sessions.entrySet()) {
+                    String sessionId = entry.getKey();
+                    Session session = entry.getValue();
 
                 }
 
@@ -59,6 +66,7 @@ public class FlinkSessionManager {
 
     /**
      * 创建一个Session
+     *
      * @param sessionName
      * @param planner
      * @param executionType
@@ -70,6 +78,16 @@ public class FlinkSessionManager {
             String executionType,
             Map<String, String> properties) {
         checkSessionCount();
+
+        if (StringUtils.isNullOrWhitespaceOnly(sessionName)) {
+            sessionName = flinkConfProperties.getSessionName();
+        }
+        if (StringUtils.isNullOrWhitespaceOnly(planner)) {
+            planner = flinkConfProperties.getPlanner();
+        }
+        if (StringUtils.isNullOrWhitespaceOnly(executionType)) {
+            executionType = flinkConfProperties.getExecutionType();
+        }
 
         Map<String, String> newProperties = new HashMap<>(properties);
         newProperties.put(Environment.EXECUTION_ENTRY + "." + ExecutionEntry.EXECUTION_PLANNER, planner);
@@ -119,15 +137,15 @@ public class FlinkSessionManager {
     }
 
 
-
     /**
      * 判定当前Session是否过期
+     *
      * @param session 会话
      */
-    private boolean isSessionExpired(Session session){
-        if (idleTimeout > 0){
+    private boolean isSessionExpired(Session session) {
+        if (idleTimeout > 0) {
             return (System.currentTimeMillis() - session.getLastVisitedTime()) > idleTimeout;
-        }else{
+        } else {
             return false;
         }
     }

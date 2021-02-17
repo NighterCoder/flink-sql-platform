@@ -12,8 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
 
-import static com.ibm.icu.impl.ClassLoaderUtil.getClassLoader;
-
 @Configuration
 public class FlinkBeanConf {
 

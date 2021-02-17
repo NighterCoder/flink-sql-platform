@@ -102,6 +102,7 @@ public class ExecutionContext<ClusterID> {
         );
 
         // 初始化TableEnvironment
+        // todo
         initializeTableEnvironment(sessionState);
 
         LOG.debug("Deployment descriptor: {}", environment.getDeployment());
@@ -697,10 +698,9 @@ public class ExecutionContext<ClusterID> {
         public ExecutionContext<?> build(){
             try{
                 return new ExecutionContext<>(
-                        this.currentEnv==null?
-                                Environment.merge(defaultEnv,sessionEnv):this.currentEnv,
+                        this.currentEnv==null ? Environment.merge(defaultEnv,sessionEnv): this.currentEnv,
                         this.sessionState,
-                        this.dependencies,
+                        this.dependencies==null?new ArrayList<>():this.dependencies,
                         this.configuration,
                         this.serviceLoader,
                         this.commandLineOptions,

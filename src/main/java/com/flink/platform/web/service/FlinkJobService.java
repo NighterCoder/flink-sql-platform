@@ -3,8 +3,6 @@ package com.flink.platform.web.service;
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.rest.session.FlinkSessionManager;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
-import org.apache.flink.runtime.rest.handler.RestHandlerException;
-import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

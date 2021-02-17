@@ -7,3 +7,6 @@ spring:
     password:
 flink:
   env-url: conf/sql-platform-defaults.yaml
+  session-name: COLLIE-FLINK
+  planner: blink
+  execution-type: streaming
