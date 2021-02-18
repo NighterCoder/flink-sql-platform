@@ -2,6 +2,7 @@ package com.flink.platform.web.service;
 
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.rest.session.FlinkSessionManager;
+import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,7 @@ public class FlinkJobService {
 
     /**
      * 创建Session
-     *
-     * @param param
+     * @param param 创建Session的可选参数
      */
     public String createSession(FlinkSessionCreateParam param) {
         String sessionName = param.getSessionName();
@@ -36,6 +36,16 @@ public class FlinkJobService {
         }
         return sessionId;
     }
+
+    /**
+     * 查询指定Session的状态
+     * @param sessionId SessionId
+     */
+    public Session sessionHeartBeat(String sessionId){
+        return sessionManager.getSession(sessionId);
+    }
+
+
 
 
 }

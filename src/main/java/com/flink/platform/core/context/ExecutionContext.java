@@ -6,6 +6,7 @@ import com.flink.platform.core.config.entries.*;
 import com.flink.platform.core.exception.SqlExecutionException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.client.ClientUtils;
 import org.apache.flink.client.cli.CliArgsException;
@@ -717,4 +718,27 @@ public class ExecutionContext<ClusterID> {
         return clusterClientFactory;
     }
 
+    public Environment getEnvironment() {
+        return environment;
+    }
+
+    public TableEnvironment getTableEnvironment() {
+        return tableEnv;
+    }
+
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    public Configuration getFlinkConfig() {
+        return flinkConfig;
+    }
+
+    public ExecutionConfig getExecutionConfig() {
+        if (streamExecEnv != null) {
+            return streamExecEnv.getConfig();
+        } else {
+            return execEnv.getConfig();
+        }
+    }
 }

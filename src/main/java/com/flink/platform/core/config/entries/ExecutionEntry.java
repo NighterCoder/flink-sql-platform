@@ -91,6 +91,8 @@ public class ExecutionEntry extends ConfigEntry {
 
     public static final String EXECUTION_MAX_TABLE_RESULT_ROWS = "max-table-result-rows";
 
+    public static final String EXECUTION_MAX_BUFFER_SIZE = "max_buffer_size";
+
     public static final String EXECUTION_RESTART_STRATEGY_TYPE = "restart-strategy.type";
 
     public static final String EXECUTION_RESTART_STRATEGY_TYPE_VALUE_FALLBACK = "fallback";
@@ -297,6 +299,11 @@ public class ExecutionEntry extends ConfigEntry {
                 .orElseGet(() -> useDefaultValue(EXECUTION_MAX_TABLE_RESULT_ROWS, 1_000_000));
     }
 
+    public int getMaxBufferSize() {
+        return properties.getOptionalInt(EXECUTION_MAX_BUFFER_SIZE)
+                .orElseGet(() -> useDefaultValue(EXECUTION_MAX_BUFFER_SIZE, 5000));
+    }
+
     public RestartStrategies.RestartStrategyConfiguration getRestartStrategy() {
         return properties
                 .getOptionalString(EXECUTION_RESTART_STRATEGY_TYPE)
@@ -379,6 +386,12 @@ public class ExecutionEntry extends ConfigEntry {
     public Optional<String> getCurrentDatabase() {
         return properties.getOptionalString(EXECUTION_CURRENT_DATABASE);
     }
+
+    public String getPlanner() {
+        return properties.getOptionalString(EXECUTION_PLANNER).orElse(EXECUTION_PLANNER_VALUE_OLD);
+    }
+
+
 
     public boolean isChangelogMode() {
         return properties

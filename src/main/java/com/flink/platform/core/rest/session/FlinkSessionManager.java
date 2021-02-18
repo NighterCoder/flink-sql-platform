@@ -5,6 +5,7 @@ import com.flink.platform.core.config.entries.ExecutionEntry;
 import com.flink.platform.core.context.DefaultContext;
 import com.flink.platform.core.context.SessionContext;
 import com.flink.platform.core.exception.SqlPlatformException;
+import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.config.FlinkConfProperties;
 import org.apache.flink.util.StringUtils;
 import org.slf4j.Logger;
@@ -27,11 +28,9 @@ public class FlinkSessionManager {
     private FlinkConfProperties flinkConfProperties;
 
     private final DefaultContext defaultContext;
-
     private final long idleTimeout;
     private final long checkInterval;
     private final long maxCount;
-
     private final Map<String, Session> sessions;
 
     private ScheduledExecutorService executorService;
@@ -63,6 +62,28 @@ public class FlinkSessionManager {
 
         }
     }
+
+
+    /**
+     * 执行SQL返回结果
+     * @param sql 执行SQL
+     * @param sessionId sessionId
+     * @return FetchData
+     */
+    public FetchData submit(String sql, String sessionId){
+        // todo 加上超时时间
+        if (this.sessions.containsKey(sessionId)) {
+            this.sessions.get(sessionId);
+        }else{
+            throw new SqlPlatformException("当前Session不存在");
+        }
+        return null;
+    }
+
+
+
+
+
 
     /**
      * 创建一个Session
@@ -122,6 +143,18 @@ public class FlinkSessionManager {
 
 
     /**
+     * 根据SessionId查询指定Session
+     * @param sessionId SessionId
+     */
+    public Session getSession(String sessionId){
+        // 底层是ConcurrentHashMap存储,这里不用判断sessionId是否存在,直接catch住
+        if (this.sessions.containsKey(sessionId)){
+            return this.sessions.get(sessionId);
+        }
+        return null;
+    }
+
+    /**
      * 检查Session存在个数
      */
     private void checkSessionCount() {
@@ -135,7 +168,6 @@ public class FlinkSessionManager {
             throw new SqlPlatformException(msg);
         }
     }
-
 
     /**
      * 判定当前Session是否过期

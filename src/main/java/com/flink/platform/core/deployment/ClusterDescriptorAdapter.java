@@ -2,13 +2,18 @@ package com.flink.platform.core.deployment;
 
 import com.flink.platform.core.context.ExecutionContext;
 import com.flink.platform.core.exception.SqlExecutionException;
+import com.flink.platform.core.exception.SqlPlatformException;
 import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.program.ClusterClient;
 import org.apache.flink.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 /**
@@ -82,13 +87,27 @@ public abstract class ClusterDescriptorAdapter<ClusterID> {
                     String.format("Session: %s, job: %s. Could not locate a cluster.", sessionId, jobId), e);
             throw new SqlExecutionException("Could not locate a cluster.", e);
         }
-
-
-
     }
 
 
-
+    /**
+     * 返回Flink Job的执行状态
+     * Returns the status of the flink job.
+     */
+    public JobStatus getJobStatus(){
+        if (jobId == null) {
+            LOG.error("Session: {}. No job has been submitted. This is a bug.", sessionId);
+            throw new IllegalStateException("No job has been submitted. This is a bug.");
+        }
+        return bridgeClientRequest(this.executionContext, jobId, sessionId, clusterClient -> {
+            try {
+                return clusterClient.getJobStatus(jobId).get(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                LOG.error(String.format("Session: %s. Failed to fetch job status for job %s", sessionId, jobId), e);
+                throw new SqlPlatformException("Failed to fetch job status for job " + jobId, e);
+            }
+        });
+    }
 
 
 
