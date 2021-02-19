@@ -38,7 +38,7 @@ public class ProgramDeployer {
 
 
     /**
-     * 根据 execution-target 决定是以哪一种方式运行flink程序
+     * 根据 execution-target 决定是以哪一种模式运行flink程序
      */
     public CompletableFuture<JobClient> deploy(){
         LOG.info("Submitting job {} for query {}`", pipeline, jobName);

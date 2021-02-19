@@ -1,6 +1,5 @@
 package com.flink.platform.web.controller;
 
-import com.flink.platform.core.context.ExecutionContext;
 import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.Result;
 import com.flink.platform.web.common.enums.SessionState;

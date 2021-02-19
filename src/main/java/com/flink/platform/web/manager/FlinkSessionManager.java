@@ -1,12 +1,17 @@
-package com.flink.platform.core.rest.session;
+package com.flink.platform.web.manager;
 
 import com.flink.platform.core.config.Environment;
 import com.flink.platform.core.config.entries.ExecutionEntry;
 import com.flink.platform.core.context.DefaultContext;
 import com.flink.platform.core.context.SessionContext;
 import com.flink.platform.core.exception.SqlPlatformException;
+import com.flink.platform.core.operation.SqlCommandParser;
+import com.flink.platform.core.rest.result.ResultSet;
+import com.flink.platform.core.rest.session.Session;
+import com.flink.platform.core.rest.session.SessionID;
 import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.config.FlinkConfProperties;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,31 +63,34 @@ public class FlinkSessionManager {
                 }
 
             }, checkInterval, checkInterval, TimeUnit.MILLISECONDS);
-
-
         }
     }
 
 
     /**
      * 执行SQL返回结果
-     * @param sql 执行SQL
+     *
+     * @param statement 执行SQL
      * @param sessionId sessionId
      * @return FetchData
      */
-    public FetchData submit(String sql, String sessionId){
+    public FetchData submit(String statement, String sessionId) {
         // todo 加上超时时间
         if (this.sessions.containsKey(sessionId)) {
-            this.sessions.get(sessionId);
-        }else{
+            Session session = this.sessions.get(sessionId);
+            Tuple2<ResultSet, SqlCommandParser.SqlCommand> result = session.runStatement(statement);
+            ResultSet resultSet = result.f0;
+            String statementType = result.f1.name();
+
+            // 根据statementType不同,结果返回的也不一样
+            // 策略模式
+            ResultHandlerEnum handlerEnum = ResultHandlerEnum.from(statementType);
+            return handlerEnum.handle(resultSet);
+
+        } else {
             throw new SqlPlatformException("当前Session不存在");
         }
-        return null;
     }
-
-
-
-
 
 
     /**
@@ -141,14 +149,14 @@ public class FlinkSessionManager {
         return sessionId;
     }
 
-
     /**
      * 根据SessionId查询指定Session
+     *
      * @param sessionId SessionId
      */
-    public Session getSession(String sessionId){
+    public Session getSession(String sessionId) {
         // 底层是ConcurrentHashMap存储,这里不用判断sessionId是否存在,直接catch住
-        if (this.sessions.containsKey(sessionId)){
+        if (this.sessions.containsKey(sessionId)) {
             return this.sessions.get(sessionId);
         }
         return null;
