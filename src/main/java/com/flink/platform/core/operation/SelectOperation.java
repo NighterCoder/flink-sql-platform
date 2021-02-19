@@ -18,9 +18,12 @@
 
 package com.flink.platform.core.operation;
 
+import com.flink.platform.core.ProgramDeployer;
 import com.flink.platform.core.context.ExecutionContext;
 import com.flink.platform.core.context.SessionContext;
+import com.flink.platform.core.deployment.ClusterDescriptorAdapterFactory;
 import com.flink.platform.core.exception.SqlExecutionException;
+import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.rest.result.ColumnInfo;
 import com.flink.platform.core.rest.result.ConstantNames;
 import com.flink.platform.core.rest.result.ResultKind;
@@ -36,6 +39,7 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableColumn;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
@@ -106,7 +110,7 @@ public class SelectOperation extends AbstractJobOperation {
 		synchronized (lock) {
 			if (resultDescriptor == null) {
 				LOG.error("Session: {}. The job for this query has been canceled.", sessionId);
-				throw new SqlGatewayException("The job for this query has been canceled.");
+				throw new SqlPlatformException("The job for this query has been canceled.");
 			}
 
 			if (resultDescriptor.isChangelogResult()) {
@@ -197,7 +201,7 @@ public class SelectOperation extends AbstractJobOperation {
 		try {
 			// writing to a sink requires an optimization step that might reference UDFs during code compilation
 			executionContext.wrapClassLoader(() -> {
-				executionContext.getTableEnvironment().registerTableSink(tableName, result.getTableSink());
+				((TableEnvironmentImpl)executionContext.getTableEnvironment()).registerTableSinkInternal(tableName, result.getTableSink());
 				table.insertInto(tableName);
 				return null;
 			});
@@ -225,7 +229,7 @@ public class SelectOperation extends AbstractJobOperation {
 		configuration.set(DeploymentOptions.SHUTDOWN_IF_ATTACHED, true);
 
 		// create execution
-		final ProgramDeployer deployer = new ProgramDeployer(configuration, jobName, pipeline);
+		final ProgramDeployer deployer = new ProgramDeployer(executionContext,configuration, jobName, pipeline);
 
 		JobClient jobClient;
 		// blocking deployment

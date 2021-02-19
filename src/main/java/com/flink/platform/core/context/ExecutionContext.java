@@ -7,6 +7,7 @@ import com.flink.platform.core.exception.SqlExecutionException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.client.ClientUtils;
 import org.apache.flink.client.cli.CliArgsException;
@@ -38,6 +39,7 @@ import org.apache.flink.table.factories.*;
 import org.apache.flink.table.functions.*;
 import org.apache.flink.table.module.Module;
 import org.apache.flink.table.module.ModuleManager;
+import org.apache.flink.table.planner.delegation.ExecutorBase;
 import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.util.FlinkException;
@@ -49,6 +51,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,7 +62,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * Context for executing table programs. This class caches everything that can be cached across
  * multiple queries as long as the session context does not change. This must be thread-safe as
  * it might be reused across different query submissions.
- *
+ * <p>
  * Session Context不变,对应Execution Context不变
  *
  * @param <ClusterID> cluster id
@@ -107,7 +110,7 @@ public class ExecutionContext<ClusterID> {
         initializeTableEnvironment(sessionState);
 
         LOG.debug("Deployment descriptor: {}", environment.getDeployment());
-        final CommandLine commandLine=createCommandLine(
+        final CommandLine commandLine = createCommandLine(
                 environment.getDeployment(),
                 commandLineOptions);
 
@@ -171,18 +174,17 @@ public class ExecutionContext<ClusterID> {
 
     /**
      * 获取ClusterDescriptor
+     *
      * @param conf
      */
-    public ClusterDescriptor<ClusterID> createClusterDescriptor(Configuration conf){
+    public ClusterDescriptor<ClusterID> createClusterDescriptor(Configuration conf) {
         return clusterClientFactory.createClusterDescriptor(conf);
     }
 
 
-
-
-
     /**
      * 获取可用的命令行配置参数
+     *
      * @param availableCommandLines
      * @param commandLine
      */
@@ -196,26 +198,26 @@ public class ExecutionContext<ClusterID> {
         throw new SqlExecutionException("Could not find a matching deployment.");
     }
 
-    private static CommandLine createCommandLine(DeploymentEntry deploymentEntry,Options commandLineOptions){
-        try{
+    private static CommandLine createCommandLine(DeploymentEntry deploymentEntry, Options commandLineOptions) {
+        try {
             return deploymentEntry.getCommandLine(commandLineOptions);
         } catch (Exception e) {
             throw new SqlExecutionException("Invalid deployment options.", e);
         }
     }
 
-    private void initializeTableEnvironment(@Nullable SessionState sessionState){
+    private void initializeTableEnvironment(@Nullable SessionState sessionState) {
         final EnvironmentSettings settings = environment.getExecution().getEnvironmentSettings();
         // Step 0.0 Initialize the table configuration.
         // 将Environment中的属性拿过来,主要是sql-client-default.yml中
-        final TableConfig config=new TableConfig();
+        final TableConfig config = new TableConfig();
         // 返回ConfigurationEntry
-        environment.getConfiguration().asMap().forEach((k,v)->{
-            config.getConfiguration().setString(k,v);
+        environment.getConfiguration().asMap().forEach((k, v) -> {
+            config.getConfiguration().setString(k, v);
         });
         // 没有可继承的状态
         final boolean noInheritedState = sessionState == null;
-        if (noInheritedState){
+        if (noInheritedState) {
             // Step 1 Create environment
 
             // Step 1.0 初始化ModuleManager
@@ -269,6 +271,17 @@ public class ExecutionContext<ClusterID> {
 
     }
 
+
+    /**
+     * Executes the given supplier using the execution context's classloader as thread classloader.
+     */
+    public <R> R wrapClassLoader(Supplier<R> supplier) {
+        try (TemporaryClassLoaderContext tmpCl = TemporaryClassLoaderContext.of(classLoader)) {
+            return supplier.get();
+        }
+    }
+
+
     /**
      * Executes the given Runnable using the execution context's classloader as thread classloader.
      */
@@ -311,7 +324,6 @@ public class ExecutionContext<ClusterID> {
         }
         throw new SqlExecutionException("Unsupported execution type for sinks.");
     }
-
 
 
     private void initializeCatalogs() {
@@ -383,6 +395,7 @@ public class ExecutionContext<ClusterID> {
 
     /**
      * 注册视图
+     *
      * @param viewEntry
      */
     private void registerView(ViewEntry viewEntry) {
@@ -397,6 +410,7 @@ public class ExecutionContext<ClusterID> {
 
     /**
      * 注册临时表
+     *
      * @param temporalTableEntry
      */
     private void registerTemporalTable(TemporalTableEntry temporalTableEntry) {
@@ -423,14 +437,14 @@ public class ExecutionContext<ClusterID> {
     /**
      * 注册自定义方法
      */
-    private void registerFunctions(){
+    private void registerFunctions() {
         // 顺序注册
-        Map<String, FunctionDefinition> functions=new LinkedHashMap<>();
-        environment.getFunctions().forEach((name,entry) -> {
+        Map<String, FunctionDefinition> functions = new LinkedHashMap<>();
+        environment.getFunctions().forEach((name, entry) -> {
             final UserDefinedFunction function = FunctionService.createFunction(
-                    entry.getDescriptor(),classLoader,false
+                    entry.getDescriptor(), classLoader, false
             );
-            functions.put(name,function);
+            functions.put(name, function);
         });
         // 注册自定义方法
         registerFunctions(functions);
@@ -468,8 +482,9 @@ public class ExecutionContext<ClusterID> {
 
     /**
      * 创建module
+     *
      * @param moduleProperties module配置属性
-     * @param classLoader 类加载器
+     * @param classLoader      类加载器
      */
     private Module createModule(Map<String, String> moduleProperties, ClassLoader classLoader) {
         final ModuleFactory factory =
@@ -480,6 +495,7 @@ public class ExecutionContext<ClusterID> {
     /**
      * 创建Table执行环境
      * 根据批处理和流处理有所区别
+     *
      * @param settings
      * @param config
      * @param catalogManager
@@ -491,16 +507,16 @@ public class ExecutionContext<ClusterID> {
             TableConfig config,
             CatalogManager catalogManager,
             ModuleManager moduleManager,
-            FunctionCatalog functionCatalog){
+            FunctionCatalog functionCatalog) {
         // 流处理: 初始化流处理执行环境;批处理执行环境为null
-        if(environment.getExecution().isStreamingPlanner()){
+        if (environment.getExecution().isStreamingPlanner()) {
             streamExecEnv = createStreamExecutionEnvironment();
             execEnv = null;
 
-            final Map<String,String> executorProperties=settings.toExecutorProperties();
-            executor=lookupExecutor(executorProperties,streamExecEnv);
+            final Map<String, String> executorProperties = settings.toExecutorProperties();
+            executor = lookupExecutor(executorProperties, streamExecEnv);
             // 初始化完流处理环境后,再初始化StreamTableEnvironment
-            tableEnv=createStreamTableEnvironment(
+            tableEnv = createStreamTableEnvironment(
                     streamExecEnv,
                     settings,
                     config,
@@ -509,7 +525,7 @@ public class ExecutionContext<ClusterID> {
                     moduleManager,
                     functionCatalog
             );
-        }else if (environment.getExecution().isBatchPlanner()) {
+        } else if (environment.getExecution().isBatchPlanner()) {
             streamExecEnv = null;
             execEnv = createExecutionEnvironment();
 
@@ -519,12 +535,10 @@ public class ExecutionContext<ClusterID> {
                     config,
                     catalogManager,
                     moduleManager);
-        }else{
+        } else {
             throw new SqlExecutionException("Unsupported execution type specified.");
         }
     }
-
-
 
 
     private TableEnvironment createStreamTableEnvironment(
@@ -534,12 +548,12 @@ public class ExecutionContext<ClusterID> {
             Executor executor,
             CatalogManager catalogManager,
             ModuleManager moduleManager,
-            FunctionCatalog functionCatalog){
+            FunctionCatalog functionCatalog) {
         // PlannerProperties ???
         final Map<String, String> plannerProperties = settings.toPlannerProperties();
 
-        final Planner planner = ComponentFactoryService.find(PlannerFactory.class,plannerProperties)
-                .create(plannerProperties,executor,config,functionCatalog,catalogManager);
+        final Planner planner = ComponentFactoryService.find(PlannerFactory.class, plannerProperties)
+                .create(plannerProperties, executor, config, functionCatalog, catalogManager);
 
         return new StreamTableEnvironmentImpl(
                 catalogManager,
@@ -555,24 +569,20 @@ public class ExecutionContext<ClusterID> {
     }
 
 
-
-
-
     /**
-     *
      * @param executorProperties
      * @param executionEnvironment
      */
-    private static Executor lookupExecutor(Map<String,String> executorProperties,
-                                           StreamExecutionEnvironment executionEnvironment){
+    private static Executor lookupExecutor(Map<String, String> executorProperties,
+                                           StreamExecutionEnvironment executionEnvironment) {
         try {
             ExecutorFactory executorFactory = ComponentFactoryService.find(ExecutorFactory.class, executorProperties);
-            Method createMethod =executorFactory.getClass().getMethod("create", Map.class, StreamExecutionEnvironment.class);
+            Method createMethod = executorFactory.getClass().getMethod("create", Map.class, StreamExecutionEnvironment.class);
 
             return (Executor) createMethod.invoke(executorFactory,
                     executorProperties,
                     executionEnvironment);
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new TableException(
                     "Could not instantiate the executor. Make sure a planner module is on the classpath",
                     e);
@@ -587,7 +597,7 @@ public class ExecutionContext<ClusterID> {
     private ExecutionEnvironment createExecutionEnvironment() {
         final ExecutionEnvironment execEnv = ExecutionEnvironment.getExecutionEnvironment();
         execEnv.setRestartStrategy(environment.getExecution().getRestartStrategy());
-        if(environment.getExecution().getParallelism().isPresent()) {
+        if (environment.getExecution().getParallelism().isPresent()) {
             execEnv.setParallelism(environment.getExecution().getParallelism().get());
         }
         return execEnv;
@@ -610,8 +620,33 @@ public class ExecutionContext<ClusterID> {
         return env;
     }
 
-    /** Represents the state that should be reused in one session. **/
-    public static class SessionState{
+
+    /**
+     * 创建StreamGraph或者plan
+     *
+     * @param jobName
+     * @return
+     */
+    public Pipeline createPipeline(String jobName) {
+        if (streamExecEnv != null) {
+            // special case for Blink planner to apply batch optimizations
+            // note: it also modifies the ExecutionConfig!
+            // todo
+//            if (executor instanceof ExecutorBase) {
+//                return ((ExecutorBase) executor).getStreamGraph(jobName);
+//            }
+            return streamExecEnv.getStreamGraph(jobName);
+        } else {
+            return execEnv.createProgramPlan(jobName);
+        }
+
+    }
+
+
+    /**
+     * Represents the state that should be reused in one session.
+     **/
+    public static class SessionState {
         public final CatalogManager catalogManager;
         public final ModuleManager moduleManager;
         public final FunctionCatalog functionCatalog;
@@ -633,13 +668,14 @@ public class ExecutionContext<ClusterID> {
         }
 
 
-
     }
 
     /**
      * 建造者模式
      */
-    /** Returns a builder for this {@link ExecutionContext}. */
+    /**
+     * Returns a builder for this {@link ExecutionContext}.
+     */
     public static Builder builder(
             Environment defaultEnv,
             Environment sessionEnv,
@@ -655,8 +691,9 @@ public class ExecutionContext<ClusterID> {
     /**
      * 内部类
      */
-    public static class Builder{
-        private final Environment sessionEnv;;
+    public static class Builder {
+        private final Environment sessionEnv;
+        ;
         private final List<URL> dependencies;
         private final Configuration configuration;
         private final ClusterClientServiceLoader serviceLoader;
@@ -696,18 +733,18 @@ public class ExecutionContext<ClusterID> {
             return this;
         }
 
-        public ExecutionContext<?> build(){
-            try{
+        public ExecutionContext<?> build() {
+            try {
                 return new ExecutionContext<>(
-                        this.currentEnv==null ? Environment.merge(defaultEnv,sessionEnv): this.currentEnv,
+                        this.currentEnv == null ? Environment.merge(defaultEnv, sessionEnv) : this.currentEnv,
                         this.sessionState,
-                        this.dependencies==null?new ArrayList<>():this.dependencies,
+                        this.dependencies == null ? new ArrayList<>() : this.dependencies,
                         this.configuration,
                         this.serviceLoader,
                         this.commandLineOptions,
                         this.commandLines
                 );
-            }catch (Throwable t) {
+            } catch (Throwable t) {
                 // catch everything such that a configuration does not crash the executor
                 throw new SqlExecutionException("Could not create execution context.", t);
             }

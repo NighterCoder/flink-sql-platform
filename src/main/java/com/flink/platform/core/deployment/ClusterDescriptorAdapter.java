@@ -18,13 +18,13 @@ import java.util.function.Function;
 
 /**
  * Adapter to handle kinds of job actions (eg. get job status or cancel job) based on execution.target
- *
+ * <p>
  * 目前支持yarn-session和yarn-per-job模式
  */
 
 public abstract class ClusterDescriptorAdapter<ClusterID> {
     private static final Logger LOG = LoggerFactory.getLogger(ClusterDescriptorAdapter.class);
-    private static final int DEFAULT_TIMEOUT_SECONDS=30;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
     protected final ExecutionContext<ClusterID> executionContext;
     // Only used for logging
@@ -35,22 +35,21 @@ public abstract class ClusterDescriptorAdapter<ClusterID> {
     protected final ClusterID clusterID;
 
     public ClusterDescriptorAdapter(
-        ExecutionContext<ClusterID> executionContext,
-        Configuration configuration,
-        String sessionId,
-        JobID jobId) {
+            ExecutionContext<ClusterID> executionContext,
+            Configuration configuration,
+            String sessionId,
+            JobID jobId) {
         this.executionContext = executionContext;
         this.sessionId = sessionId;
         this.jobId = jobId;
         this.configuration = configuration;
-        this.clusterID=executionContext.getClusterClientFactory().getClusterId(configuration);
+        this.clusterID = executionContext.getClusterClientFactory().getClusterId(configuration);
     }
 
 
     /**
      * The reason of using ClusterClient instead of JobClient to retrieve a cluster is
      * the JobClient can't know whether the job is finished on yarn-per-job mode.
-     *
      *
      * @param executionContext
      * @param jobId
@@ -62,8 +61,8 @@ public abstract class ClusterDescriptorAdapter<ClusterID> {
             ExecutionContext<ClusterID> executionContext,
             JobID jobId,
             String sessionId,
-            Function<ClusterClient<?>,R> function) {
-        if (this.clusterID==null){
+            Function<ClusterClient<?>, R> function) {
+        if (this.clusterID == null) {
             LOG.error("Session: {}. Cluster information don't exist.", sessionId);
             throw new IllegalStateException("Cluster information don't exist.");
         }
@@ -94,7 +93,7 @@ public abstract class ClusterDescriptorAdapter<ClusterID> {
      * 返回Flink Job的执行状态
      * Returns the status of the flink job.
      */
-    public JobStatus getJobStatus(){
+    public JobStatus getJobStatus() {
         if (jobId == null) {
             LOG.error("Session: {}. No job has been submitted. This is a bug.", sessionId);
             throw new IllegalStateException("No job has been submitted. This is a bug.");
@@ -110,10 +109,38 @@ public abstract class ClusterDescriptorAdapter<ClusterID> {
     }
 
 
+    /**
+     * cancel the flink job
+     */
+    public void cancelJob(){
+        if (jobId == null) {
+            LOG.error("Session: {}. No job has been submitted. This is a bug.", sessionId);
+            throw new IllegalStateException("No job has been submitted. This is a bug.");
+        }
+        LOG.info("Session: {}. Start to cancel job {}.", sessionId, jobId);
+        bridgeClientRequest(this.executionContext, jobId, sessionId, clusterClient -> {
+            try {
+                clusterClient.cancel(jobId).get();
+            } catch (Throwable t) {
+                // the job might has finished earlier
+            }
+            return null;
+        });
+    }
 
 
 
-
+    /**
+     * Checks whether this job state is <i>globally terminal</i>.
+     * A globally terminal job is complete and cannot fail any more
+     * and will not be restarted or recovered by another standby master node.
+     *
+     * <p>When a globally terminal state has been reached,
+     * all recovery data for the job is dropped from the high-availability services.
+     *
+     * @return True, if this job status is globally terminal, false otherwise.
+     */
+    public abstract boolean isGloballyTerminalState();
 
 }
 

@@ -12,8 +12,15 @@ public class OperationFactory {
 
         switch (call.command){
             case SELECT:
-               // operation = new
+               operation = new SelectOperation(context,call.operands[0]);
+               break;
+
+            default:
+                throw new RuntimeException("Unsupported command call " + call + ". This is a bug.");
         }
 
+
+
+        return operation;
     }
 }

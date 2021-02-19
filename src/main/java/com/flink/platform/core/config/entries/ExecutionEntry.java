@@ -51,18 +51,31 @@ public class ExecutionEntry extends ConfigEntry {
     public static final ExecutionEntry DEFAULT_INSTANCE =
             new ExecutionEntry(new DescriptorProperties(true));
 
+    // planner种类
     public static final String EXECUTION_PLANNER = "planner";
 
     public static final String EXECUTION_PLANNER_VALUE_OLD = "old";
 
     public static final String EXECUTION_PLANNER_VALUE_BLINK = "blink";
 
+    // type种类
     public static final String EXECUTION_TYPE = "type";
 
     public static final String EXECUTION_TYPE_VALUE_STREAMING = "streaming";
 
     public static final String EXECUTION_TYPE_VALUE_BATCH = "batch";
 
+
+    // flink程序启动种类
+    public static final String EXECUTION_TARGET="target";
+
+    public static final String EXECUTION_TARGET_YARN_SESSION = "yarn-session";
+
+    public static final String EXECUTION_TARGET_YARN_PER_JOB = "yarn-per-job";
+
+
+
+    // 时间类型
     public static final String EXECUTION_TIME_CHARACTERISTIC = "time-characteristic";
 
     public static final String EXECUTION_TIME_CHARACTERISTIC_VALUE_EVENT_TIME = "event-time";
@@ -242,6 +255,23 @@ public class ExecutionEntry extends ConfigEntry {
         }
         return true;
     }
+
+
+    // 判断是否是yarn-per-job模式
+    public boolean inYarnPerJob(){
+        return properties.getOptionalString(EXECUTION_TARGET)
+                .map(v -> v.equals(EXECUTION_TARGET_YARN_PER_JOB))
+                .orElse(false);
+    }
+
+
+    // 判断是不是yarn-session模式
+    public boolean inYarnSession(){
+        return properties.getOptionalString(EXECUTION_TARGET)
+                .map(v -> v.equals(EXECUTION_TARGET_YARN_SESSION))
+                .orElse(false);
+    }
+
 
     public TimeCharacteristic getTimeCharacteristic() {
         return properties
