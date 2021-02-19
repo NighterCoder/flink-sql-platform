@@ -3,6 +3,7 @@ package com.flink.platform.web.service;
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.common.entity.StatementResult;
+import com.flink.platform.web.common.enums.StatementState;
 import com.flink.platform.web.manager.FlinkSessionManager;
 import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
@@ -47,18 +48,30 @@ public class FlinkJobService {
         return sessionManager.getSession(sessionId);
     }
 
-
     /**
-     *
+     * 返回SQL执行的结果
      * @param sql 执行SQL
      * @param sessionId sessionId
      * @return StatementResult
      */
     public StatementResult submit(String sql,String sessionId){
         StatementResult result = new StatementResult();
+        result.setStatement(sql);
         // jobId is not null only after job is submitted
         FetchData fetchData = sessionManager.submit(sql,sessionId);
+        if(fetchData.getJobId()!=null){
+            // JobId依旧存在,还在执行当中
+            result.setJobId(fetchData.getJobId());
+            result.setState(StatementState.RUNNING);
+        }else{
+            //JobId不存在
+            result.setState(StatementState.DONE);
+            result.setColumns(fetchData.getColumns());
+            result.setRows(fetchData.getRows());
+        }
+        result.setEnd(System.currentTimeMillis());
 
+        return result;
     }
 
 

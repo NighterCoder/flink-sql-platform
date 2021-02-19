@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * ...
  */
 @RestController
-@RequestMapping("/api/flink")
+@RequestMapping("/api/v1/flink")
 @Slf4j
 public class FlinkJobController {
 
