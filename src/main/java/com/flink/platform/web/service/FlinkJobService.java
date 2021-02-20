@@ -3,6 +3,7 @@ package com.flink.platform.web.service;
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.common.entity.StatementResult;
+import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.StatementState;
 import com.flink.platform.web.manager.FlinkSessionManager;
 import com.flink.platform.core.rest.session.Session;
@@ -44,8 +45,8 @@ public class FlinkJobService {
      * 查询指定Session的状态
      * @param sessionId SessionId
      */
-    public Session sessionHeartBeat(String sessionId){
-        return sessionManager.getSession(sessionId);
+    public SessionState sessionHeartBeat(String sessionId){
+        return sessionManager.statusSession(sessionId);
     }
 
     /**

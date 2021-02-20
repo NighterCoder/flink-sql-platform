@@ -1,11 +1,14 @@
 package com.flink.platform;
 
 import lombok.extern.slf4j.Slf4j;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @Slf4j
 @SpringBootApplication
+//扫描对应Mapper接口所在的包路径
+@MapperScan("com.flink.platform.web.mapper")
 public class PlatformApplication {
 
     public static void main(String[] args) {

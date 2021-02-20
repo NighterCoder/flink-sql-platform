@@ -1,4 +1,4 @@
-package com.flink.platform.web.common.entity.analysis;
+package com.flink.platform.web.common.entity;
 
 import com.flink.platform.web.common.enums.SessionState;
 import lombok.AllArgsConstructor;

@@ -1,12 +1,37 @@
-####jdbc连接池
+####Jdbc连接池
 spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/flink_sql_platform?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
+    url: jdbc:mysql://localhost:3306/deer?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
     username: root
     password:
+
+####Flink SQL执行相关配置
 flink:
   env-url: conf/sql-platform-defaults.yaml
   session-name: COLLIE-FLINK
   planner: blink
   execution-type: streaming
+
+####mybatis-plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true  #默认为true
+  global-config:
+    db-config:
+      id-type: auto # ID自增
+      logic-delete-value: 1 # 逻辑已删除值
+      logic-not-delete-value: 0 # 逻辑未删除值
+  type-aliases-package: com.flink.platform.web.common.entity
+  mapper-locations: classpath*:mapper/*.xml
+
+###日志
+logging:
+  level:
+    ### dao开启debug模式,输出查询sql
+    com:
+      flink:
+        platform:
+          web:
+            mapper: debug
+

@@ -40,11 +40,8 @@ public class FlinkJobController {
      */
     @GetMapping("/session/status")
     public Result status(String sessionId) {
-        Session session = flinkJobService.sessionHeartBeat(sessionId);
-        if (session != null) {
-            return Result.success(SessionState.RUNNING);
-        }
-        return Result.success(SessionState.NONE);
+        SessionState state = flinkJobService.sessionHeartBeat(sessionId);
+        return Result.success(state);
     }
 
     /**

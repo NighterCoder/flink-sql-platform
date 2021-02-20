@@ -13,11 +13,10 @@ import java.net.URL;
 import java.util.Objects;
 
 @Configuration
-public class FlinkBeanConf {
+public class FlinkBeanConfiguration {
 
     @Autowired
     private FlinkConfProperties flinkConfProperties;
-
 
     @Bean
     public FlinkSessionManager flinkSessionManager() {

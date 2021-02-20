@@ -3,6 +3,7 @@ package com.flink.platform.web.manager;
 import com.flink.platform.core.config.Environment;
 import com.flink.platform.core.config.entries.ExecutionEntry;
 import com.flink.platform.core.context.DefaultContext;
+import com.flink.platform.core.context.ExecutionContext;
 import com.flink.platform.core.context.SessionContext;
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.operation.SqlCommandParser;
@@ -10,9 +11,12 @@ import com.flink.platform.core.rest.result.ResultSet;
 import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.core.rest.session.SessionID;
 import com.flink.platform.web.common.entity.FetchData;
+import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.config.FlinkConfProperties;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.runtime.rest.messages.dataset.ClusterDataSetIdPathParameter;
 import org.apache.flink.util.StringUtils;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +29,7 @@ import java.util.concurrent.*;
 /**
  * Flink Session Manager
  */
-public class FlinkSessionManager {
+public class FlinkSessionManager implements SessionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(FlinkSessionManager.class);
 
@@ -154,10 +158,28 @@ public class FlinkSessionManager {
      *
      * @param sessionId SessionId
      */
-    public Session getSession(String sessionId) {
+    public SessionState statusSession(String sessionId) {
         // 底层是ConcurrentHashMap存储,这里不用判断sessionId是否存在,直接catch住
         if (this.sessions.containsKey(sessionId)) {
-            return this.sessions.get(sessionId);
+            return SessionState.RUNNING;
+        }
+        return SessionState.NONE;
+    }
+
+    /**
+     * 根据sessionId获取Application Url
+     * @param sessionId
+     */
+    @Override
+    public String appMasterUI(String sessionId) {
+        if (this.sessions.containsKey(sessionId)) {
+            Session session = this.sessions.get(sessionId);
+            // 如何根据Session获取Application Url
+            ExecutionContext executionContext = session.getContext().getExecutionContext();
+            ApplicationId applicationId = (ApplicationId)executionContext.getClusterClientFactory().getClusterId(executionContext.getFlinkConfig());
+            if (applicationId!=null) {
+                return applicationId.toString();
+            }
         }
         return null;
     }
