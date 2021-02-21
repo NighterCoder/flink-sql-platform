@@ -1,6 +1,8 @@
 package com.flink.platform.web.service;
 
+import com.flink.platform.web.common.entity.JobSubmitDTO;
 import com.flink.platform.web.common.entity.SessionVO;
+import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.analysis.SessionDO;
 import com.flink.platform.web.common.enums.ExecuteType;
 import com.flink.platform.web.common.enums.SessionState;
@@ -63,6 +65,24 @@ public class DataAnalysisService {
         }
         // todo 获取applicationMasterUrl
         return new SessionVO(sessionId, SessionState.RUNNING, "");
+    }
+
+
+    /**
+     * 批量提交SQL
+     *
+     * @param dto dto
+     */
+    public StatementResult submit(JobSubmitDTO dto) {
+        // todo 保存当前user执行的SQL,以便查询历史记录
+
+        String sql=dto.getSql();
+        SessionManager sessionManager=sessionManagerFactory.create(dto.getSessionType());
+        // 格式化SQL 1.去除注释 2.去除空格
+
+
+
+
     }
 
 

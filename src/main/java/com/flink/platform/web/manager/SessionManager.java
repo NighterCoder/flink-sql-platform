@@ -1,5 +1,6 @@
 package com.flink.platform.web.manager;
 
+import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.common.enums.SessionState;
 
 import java.util.Map;
@@ -19,5 +20,5 @@ public interface SessionManager {
 
     String appMasterUI(String sessionId) throws Exception;
 
-
+    FetchData submit(String statement, String sessionId);
 }
