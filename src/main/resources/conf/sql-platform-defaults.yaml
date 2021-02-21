@@ -98,11 +98,11 @@ functions: [] # empty list
 
 # Define catalogs here.
 
-catalogs: [] # empty list
+catalogs:  # empty list
 # A typical catalog definition looks like:
-#  - name: myhive
-#    type: hive
-#    hive-conf-dir: /opt/hive_conf/
+  - name: myhive
+    type: hive
+    hive-conf-dir: /usr/local/Cellar/hive/3.1.2_1/libexec/conf
 #    default-database: ...
 
 #==============================================================================
@@ -127,9 +127,9 @@ execution:
   # maximum parallelism
   max-parallelism: 128
   # current catalog ('default_catalog' by default)
-  current-catalog: default_catalog
+  current-catalog: myhive
   # current database of the current catalog (default database of the catalog by default)
-  current-database: default_database
+  current-database: default
 
 #==============================================================================
 # Configuration options

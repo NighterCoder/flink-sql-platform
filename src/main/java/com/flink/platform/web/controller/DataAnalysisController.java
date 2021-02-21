@@ -8,6 +8,7 @@ import com.flink.platform.web.common.enums.ExecuteType;
 import com.flink.platform.web.common.enums.SessionType;
 import com.flink.platform.web.service.DataAnalysisService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.mapreduce.Job;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,11 +42,22 @@ public class DataAnalysisController {
         return dataAnalysisService.getSession(st, et);
     }
 
-
+    /**
+     * 批量提交执行SQL
+     *
+     * @param dto 前端参数类
+     */
     @PostMapping("submit")
     public StatementResult submit(@RequestBody JobSubmitDTO dto) {
         return dataAnalysisService.submit(dto);
     }
+
+
+    @PostMapping("fetch")
+    public StatementResult fetch(@RequestBody JobSubmitDTO dto){
+        return null;
+    }
+
 
 
 }

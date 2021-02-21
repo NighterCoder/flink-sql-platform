@@ -5,6 +5,8 @@ import com.flink.platform.core.context.SessionContext;
 import com.flink.platform.core.exception.SqlParseException;
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.operation.JobOperation;
+import com.flink.platform.core.operation.Operation;
+import com.flink.platform.core.operation.OperationFactory;
 import com.flink.platform.core.operation.SqlCommandParser;
 import com.flink.platform.core.rest.result.ResultSet;
 import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
@@ -86,12 +88,40 @@ public class Session {
         }
 
         // 工厂模式创建对应的Operation
-        // OperationFa
+        Operation operation = OperationFactory.createOperation(call,context);
+        // 执行对应的命令
+        ResultSet resultSet = operation.execute();
 
 
-        return null;
-
+        // JobOperation 会提交任务到Flink集群,存在JobId
+        if (operation instanceof JobOperation){
+            JobOperation jobOperation = (JobOperation) operation;
+            jobOperations.put(jobOperation.getJobId(),jobOperation);
+        }
+        return Tuple2.of(resultSet,call.command);
     }
 
+    /**
+     * 只有具备JobId的operation才可以获取结果
+     * @param jobId
+     * @param token
+     * @param maxFetchSize
+     */
+    public Optional<ResultSet> getJobResult(JobID jobId,long token,int maxFetchSize){
+        LOG.info("Session: {}, get result for job: {}, token: {}, maxFetchSize: {}",
+                sessionId, jobId, token, maxFetchSize);
+        return getJobOperation(jobId).getJobResult(token,maxFetchSize);
+    }
+
+    private JobOperation getJobOperation(JobID jobId) throws SqlPlatformException {
+        JobOperation jobOperation = jobOperations.get(jobId);
+        if (jobOperation == null) {
+            String msg = String.format("Job: %s does not exist in current session: %s.", jobId, sessionId);
+            LOG.error(msg);
+            throw new SqlPlatformException(msg);
+        } else {
+            return jobOperation;
+        }
+    }
 
 }

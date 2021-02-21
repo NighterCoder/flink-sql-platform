@@ -246,6 +246,9 @@ public final class SqlCommandParser {
 	private static final Function<String[], Optional<String[]>> NO_OPERANDS =
 		(operands) -> Optional.of(new String[0]);
 
+	private static final Function<String[], Optional<String[]>> SINGLE_OPERAND =
+			(operands) -> Optional.of(new String[]{operands[0]});
+
 	private static final int DEFAULT_PATTERN_FLAGS = Pattern.CASE_INSENSITIVE | Pattern.DOTALL;
 
 	/**
@@ -294,11 +297,22 @@ public final class SqlCommandParser {
 
 		// the following commands are not supported by SQL parser but are needed by users
 
-		SET(
+		/*SET(
 			"SET",
 			// `SET` with operands can be parsed by SQL parser
 			// we keep `SET` with no operands here to print all properties
-			NO_OPERANDS),
+			NO_OPERANDS),*/
+
+		SET(
+				"SET(\\s+(\\S+)\\s*=(.*))?", // whitespace is only ignored on the left side of '='
+				(operands) -> {
+					if (operands.length < 3) {
+						return Optional.empty();
+					} else if (operands[0] == null) {
+						return Optional.of(new String[0]);
+					}
+					return Optional.of(new String[]{operands[1], operands[2]});
+				}),
 
 		// the following commands will be supported by SQL parser in the future
 		// remove them once they're supported
@@ -323,6 +337,112 @@ public final class SqlCommandParser {
 		SHOW_CURRENT_DATABASE(
 			"SHOW\\s+CURRENT\\s+DATABASE",
 			NO_OPERANDS);
+		/*SHOW_CATALOGS(
+				"SHOW\\s+CATALOGS",
+				NO_OPERANDS),
+
+		SHOW_CURRENT_CATALOG(
+				"SHOW\\s+CURRENT\\s+CATALOG",
+				NO_OPERANDS),
+
+		SHOW_DATABASES(
+				"SHOW\\s+DATABASES",
+				NO_OPERANDS),
+
+		SHOW_CURRENT_DATABASE(
+				"SHOW\\s+CURRENT\\s+DATABASE",
+				NO_OPERANDS),
+
+		SHOW_TABLES(
+				"SHOW\\s+TABLES",
+				NO_OPERANDS),
+
+		SHOW_FUNCTIONS(
+				"SHOW\\s+FUNCTIONS",
+				NO_OPERANDS),
+
+		SHOW_MODULES(
+				"SHOW\\s+MODULES",
+				NO_OPERANDS),
+
+		USE_CATALOG(
+				"USE\\s+CATALOG\\s+(.*)",
+				SINGLE_OPERAND),
+
+		USE(
+				"USE\\s+(?!CATALOG)(.*)",
+				SINGLE_OPERAND),
+
+		DESCRIBE(
+				"DESCRIBE\\s+(.*)",
+				SINGLE_OPERAND),
+
+		EXPLAIN(
+				"EXPLAIN\\s+(.*)",
+				SINGLE_OPERAND),
+
+		SELECT(
+				"(WITH.*SELECT.*|SELECT.*)",
+				SINGLE_OPERAND),
+
+		INSERT_INTO(
+				"(INSERT\\s+INTO.*)",
+				SINGLE_OPERAND),
+
+		INSERT_OVERWRITE(
+				"(INSERT\\s+OVERWRITE.*)",
+				SINGLE_OPERAND),
+
+		CREATE_TABLE("(CREATE\\s+TABLE\\s+.*)", SINGLE_OPERAND),
+
+		DROP_TABLE("(DROP\\s+TABLE\\s+.*)", SINGLE_OPERAND),
+
+		IMPORT_LOOKUP("IMPORT\\s+LOOKUP\\s+(\\S+)", SINGLE_OPERAND),
+
+		CREATE_VIEW(
+				"CREATE\\s+VIEW\\s+(\\S+)\\s+AS\\s+(.*)",
+				(operands) -> {
+					if (operands.length < 2) {
+						return Optional.empty();
+					}
+					return Optional.of(new String[]{operands[0], operands[1]});
+				}),
+
+		CREATE_DATABASE(
+				"(CREATE\\s+DATABASE\\s+.*)",
+				SINGLE_OPERAND),
+
+		DROP_DATABASE(
+				"(DROP\\s+DATABASE\\s+.*)",
+				SINGLE_OPERAND),
+
+		DROP_VIEW(
+				"DROP\\s+VIEW\\s+(.*)",
+				SINGLE_OPERAND),
+
+		ALTER_DATABASE(
+				"(ALTER\\s+DATABASE\\s+.*)",
+				SINGLE_OPERAND),
+
+		ALTER_TABLE(
+				"(ALTER\\s+TABLE\\s+.*)",
+				SINGLE_OPERAND),
+
+		SET(
+				"SET(\\s+(\\S+)\\s*=(.*))?", // whitespace is only ignored on the left side of '='
+				(operands) -> {
+					if (operands.length < 3) {
+						return Optional.empty();
+					} else if (operands[0] == null) {
+						return Optional.of(new String[0]);
+					}
+					return Optional.of(new String[]{operands[1], operands[2]});
+				}),
+
+		RESET(
+				"RESET",
+				NO_OPERANDS);
+		*/
 
 		public final Pattern pattern;
 		public final Function<String[], Optional<String[]>> operandConverter;

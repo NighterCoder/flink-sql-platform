@@ -7,17 +7,26 @@ import com.flink.platform.web.common.entity.analysis.SessionDO;
 import com.flink.platform.web.common.enums.ExecuteType;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.SessionType;
+import com.flink.platform.web.common.util.SQLUtils;
+import com.flink.platform.web.config.FlinkConfProperties;
 import com.flink.platform.web.manager.SessionManager;
 import com.flink.platform.web.manager.SessionManagerFactory;
 import com.flink.platform.web.mapper.SessionMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.jdbc.SQL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by 凌战 on 2021/2/20
  */
+@Slf4j
 @Service
 public class DataAnalysisService {
 
@@ -25,6 +34,8 @@ public class DataAnalysisService {
     @Autowired
     private SessionManagerFactory sessionManagerFactory;
 
+    @Autowired
+    private FlinkJobService flinkJobService;
 
     @Autowired
     private SessionMapper sessionMapper;
@@ -76,12 +87,44 @@ public class DataAnalysisService {
     public StatementResult submit(JobSubmitDTO dto) {
         // todo 保存当前user执行的SQL,以便查询历史记录
 
-        String sql=dto.getSql();
-        SessionManager sessionManager=sessionManagerFactory.create(dto.getSessionType());
+        String sql = dto.getSql();
+        String sessionId = dto.getSessionId();
+        // 工厂模式创建SessionManager
+        SessionManager sessionManager = sessionManagerFactory.create(dto.getSessionType());
         // 格式化SQL 1.去除注释 2.去除空格
+        sql = SQLUtils.commentsFormat(sql);
+        // todo 目前没有支持变量替换
+        sql = SQLUtils.generateSQL(sql, Collections.emptyMap());
+        log.info("提交SQL:{}", sql);
+
+        // 对SQL按照分号作为分隔符分割
+        List<String> list = Arrays.stream(sql.split(";"))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+
+        int size = list.size();
+        for (int i = 0; i < size; i++) {
+            // 只返回最后一个语句的执行结果
+            if (i == size - 1) {
+                return flinkJobService.submit(list.get(i), sessionId);
+            }
+            flinkJobService.submit(list.get(i), sessionId);
+        }
+        return new StatementResult();
+    }
+
+    /**
+     * 获取查询结果
+     *
+     * @param dto dto
+     */
+    public StatementResult fetchData(JobSubmitDTO dto) {
+        String sessionId = dto.getSessionId();
+        String jobID= dto.getJobId();
+        long token = dto.getToken();
 
 
-
+        return null;
 
     }
 

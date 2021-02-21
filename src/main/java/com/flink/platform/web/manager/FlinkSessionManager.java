@@ -12,7 +12,9 @@ import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.core.rest.session.SessionID;
 import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.common.enums.SessionState;
+import com.flink.platform.web.common.enums.SessionType;
 import com.flink.platform.web.config.FlinkConfProperties;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.runtime.rest.messages.dataset.ClusterDataSetIdPathParameter;
 import org.apache.flink.util.StringUtils;
@@ -96,6 +98,26 @@ public class FlinkSessionManager implements SessionManager {
         }
     }
 
+    /**
+     * 获取任务执行结果
+     *
+     * @param sessionId session标识
+     * @param jobId     jobId
+     * @param token     token
+     */
+    public FetchData getJobResult(String sessionId, String jobId, Long token, SessionType sessionType) {
+        if (this.sessions.containsKey(sessionId)) {
+            Session session = this.sessions.get(sessionId);
+            JobID jobID = JobID.fromHexString(jobId);
+
+            //批处理与实时处理不一样
+            session.getJobResult(jobID, token, flinkConfProperties.getMaxFetchSize());
+            return null;
+        } else {
+            throw new SqlPlatformException("当前Session不存在");
+        }
+    }
+
 
     /**
      * 创建一个Session
@@ -168,6 +190,7 @@ public class FlinkSessionManager implements SessionManager {
 
     /**
      * 根据sessionId获取Application Url
+     *
      * @param sessionId
      */
     @Override
@@ -176,13 +199,14 @@ public class FlinkSessionManager implements SessionManager {
             Session session = this.sessions.get(sessionId);
             // 如何根据Session获取Application Url
             ExecutionContext executionContext = session.getContext().getExecutionContext();
-            ApplicationId applicationId = (ApplicationId)executionContext.getClusterClientFactory().getClusterId(executionContext.getFlinkConfig());
-            if (applicationId!=null) {
+            ApplicationId applicationId = (ApplicationId) executionContext.getClusterClientFactory().getClusterId(executionContext.getFlinkConfig());
+            if (applicationId != null) {
                 return applicationId.toString();
             }
         }
         return null;
     }
+
 
     /**
      * 检查Session存在个数

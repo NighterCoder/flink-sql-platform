@@ -11,6 +11,7 @@ public class FlinkConfProperties {
     private String sessionName;
     private String planner;
     private String executionType;
+    private Integer maxFetchSize;
 
     public String getEnvUrl() {
         return envUrl;
@@ -38,5 +39,12 @@ public class FlinkConfProperties {
     }
     public void setExecutionType(String executionType) {
         this.executionType = executionType;
+    }
+
+    public Integer getMaxFetchSize() {
+        return maxFetchSize;
+    }
+    public void setMaxFetchSize(Integer maxFetchSize) {
+        this.maxFetchSize = maxFetchSize;
     }
 }

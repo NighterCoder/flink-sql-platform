@@ -106,7 +106,6 @@ public class ExecutionContext<ClusterID> {
         );
 
         // 初始化TableEnvironment
-        // todo
         initializeTableEnvironment(sessionState);
 
         LOG.debug("Deployment descriptor: {}", environment.getDeployment());
@@ -267,6 +266,17 @@ public class ExecutionContext<ClusterID> {
             // No need to register the catalogs if already inherit from the same session.
             initializeCatalogs();
 
+        } else {
+            // 同一个Session
+            // Set up session state
+            this.sessionState = sessionState;
+            // 从sessionState中获取相关配置
+            createTableEnvironment(
+                    settings,
+                    config,
+                    sessionState.catalogManager,
+                    sessionState.moduleManager,
+                    sessionState.functionCatalog);
         }
 
     }
@@ -777,5 +787,9 @@ public class ExecutionContext<ClusterID> {
         } else {
             return execEnv.getConfig();
         }
+    }
+
+    public SessionState getSessionState() {
+        return sessionState;
     }
 }
