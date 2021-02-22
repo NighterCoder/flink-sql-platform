@@ -6,6 +6,12 @@ spring:
     username: root
     password: 123456
 
+
+hdfs:
+  path: test
+  upload: /tmp/deer/upload
+
+
 ####Flink SQL执行相关配置
 flink:
   env-url: conf/sql-platform-defaults.yaml

@@ -1,6 +1,7 @@
 package com.flink.platform.web.controller;
 
 import com.flink.platform.web.common.Result;
+import com.flink.platform.web.common.entity.jar.JarConf;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.service.FlinkJobService;
@@ -57,6 +58,19 @@ public class FlinkJobController {
     public void upload(@RequestParam(value = "jar") MultipartFile jar) {
 
     }
+
+    /**
+     * 提交Jar包
+     * @param jarConf jar提交参数类
+     */
+    public void submit(@RequestBody JarConf jarConf){
+
+    }
+
+
+
+
+
 
 
 }
