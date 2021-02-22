@@ -1,6 +1,5 @@
 package com.flink.platform.web.controller;
 
-import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.Result;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
@@ -8,6 +7,7 @@ import com.flink.platform.web.service.FlinkJobService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Flink 任务执行Controller
@@ -24,6 +24,7 @@ public class FlinkJobController {
 
     /**
      * 创建Session
+     *
      * @param param 查询参数(其中executionType是必填)
      * @return SessionId
      */
@@ -35,6 +36,7 @@ public class FlinkJobController {
 
     /**
      * 查询Session状态
+     *
      * @param sessionId sessionId
      * @return SessionState
      */
@@ -44,20 +46,16 @@ public class FlinkJobController {
         return Result.success(state);
     }
 
-    /**
-     * Flink中只有insert和select才存在jobId,其他的声明语句都可以理解返回
-     * @param sql sql语句
-     * @param sessionId sessionId
-     * @return StatementResult
-     */
-    @PostMapping("/session/sql/submit")
-    public Result submit(String sql,String sessionId) {
-        // 1.SQL以分号作为分隔符,形成多个执行SQL
 
-        // 2.执行SQL
-        // todo for循环
-        // flinkJobService.submit(sql,sessionId);
-        return null;
+    /**
+     * todo 目前jar包支持流处理,批处理定时调度待完善
+     * 上传Jar包,并且保存到数据库
+     *
+     * @param jar jar包文件
+     */
+    @PostMapping("/jar/upload")
+    public void upload(@RequestParam(value = "jar") MultipartFile jar) {
+
     }
 
 

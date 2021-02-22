@@ -2,7 +2,6 @@ package com.flink.platform.web.common.entity.analysis;
 
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
