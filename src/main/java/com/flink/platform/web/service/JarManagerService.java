@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.flink.platform.web.common.util.DateUtils;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,7 +36,7 @@ public class JarManagerService {
      * @link https://blog.csdn.net/qq_36314960/article/details/104775557
      * @param file jar文件
      */
-    public void upload(MultipartFile file){
+    public void upload(MultipartFile file) throws Exception {
         // 获取文件完整名[文件名+扩展名]
         String jarName=file.getOriginalFilename();
         // todo 获取username
@@ -47,6 +48,10 @@ public class JarManagerService {
         jarDTO.setUsername(username);
         jarDTO.setUploadTime(Timestamp.valueOf(LocalDateTime.now()));
 
+        // 上传至HDFS,参数1为上传路径;参数2为上传文件
+        hdfsManager.write(jarDTO.getJarPath(),file.getInputStream());
+
+        // todo 记录保存至数据库
     }
 
 
@@ -57,7 +62,7 @@ public class JarManagerService {
      * @param username 用户名
      */
     private String generateFileUploadPath(String jarName,String username){
-        String currentTime = DateUtils.format(LocalDate.now(),"yyyyMMdd_HHmmss");
+        String currentTime = DateUtils.format(LocalDateTime.now(),"yyyyMMdd_HHmmss");
         return String.format("hdfs://%s/%s_%s_%s",flinkRootPath,username,currentTime,jarName);
     }
 

@@ -14,10 +14,16 @@ import org.apache.flink.core.execution.PipelineExecutor;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.client.deployment.executors.PipelineExecutorUtils;
 
+import org.apache.flink.yarn.YarnClusterDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ResourceUtils;
 
 import javax.annotation.Nonnull;
+import java.io.File;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -39,11 +45,15 @@ public class PlatformAbstractJobClusterExecutor<ClusterID,ClientFactory extends 
 
     @Override
     public CompletableFuture<JobClient> execute(Pipeline pipeline, Configuration configuration, ClassLoader classLoader) throws Exception {
+
         final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline,configuration);
 
-        //todo jobGraph 添加自定义方法jar包
+
+        //jobGraph.addJars();
+        // todo jobGraph 添加自定义方法jar包
 
         try(final ClusterDescriptor<ClusterID> clusterDescriptor = clusterClientFactory.createClusterDescriptor(configuration) ){
+
             final ExecutionConfigAccessor configAccessor = ExecutionConfigAccessor.fromConfiguration(configuration);
             final ClusterSpecification clusterSpecification = clusterClientFactory.getClusterSpecification(configuration);
 

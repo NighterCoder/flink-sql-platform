@@ -1,29 +1,36 @@
 package com.flink.platform.web.service;
 
-import com.flink.platform.core.context.ExecutionContext;
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.executor.PlatformAbstractJobClusterExecutor;
-import com.flink.platform.core.executor.PlatformYarnJobClusterExecutor;
 import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.jar.JarConf;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.StatementState;
-import com.flink.platform.web.manager.FlinkSessionManager;
-import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
+import com.flink.platform.web.manager.FlinkSessionManager;
 import com.flink.platform.web.manager.HDFSManager;
 import org.apache.flink.api.dag.Pipeline;
+import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.client.program.PackagedProgram;
 import org.apache.flink.client.program.PackagedProgramUtils;
+import org.apache.flink.client.program.ProgramInvocationException;
+import org.apache.flink.configuration.ConfigUtils;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.GlobalConfiguration;
+import org.apache.flink.configuration.PipelineOptions;
+//import org.apache.flink.core.plugin.TemporaryClassLoaderContext;
+import org.apache.flink.util.TemporaryClassLoaderContext;
 import org.apache.flink.yarn.YarnClusterClientFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.Map;
+import java.net.URL;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Service
 public class FlinkJobService {
@@ -94,33 +101,80 @@ public class FlinkJobService {
      * 提交Jar包
      * @param jarConf 参数类
      */
-    public void submitJar(JarConf jarConf) throws Exception {
+    public String submitJar(JarConf jarConf) throws Exception {
         // 先去下载jar包
         String jarPath=jarConf.getJarPath();
-        String dest = "/tmp/"+jarConf.getJarName();
+        String dest = "c:/tmp/"+jarConf.getJarName();
         hdfsManager.download(jarPath,dest);
         // 构建jar File
         File jar = new File(dest);
+
+        List<URL> userClassPaths = new ArrayList<>();
+        File file = ResourceUtils.getFile(new URL(Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).toString()+"lib"));
+        if(file.isDirectory()&&file.listFiles()!=null){
+            for(File ele: Objects.requireNonNull(file.listFiles())) {
+                userClassPaths.add(ele.toURI().toURL());
+            }
+        }
 
         // 构建PackagedProgram
         PackagedProgram packagedProgram =
                 PackagedProgram.newBuilder()
                 .setJarFile(jar)
-                .setEntryPointClassName(jarConf.getEntryClass())
+                .setUserClassPaths(userClassPaths)
                 .build();
-        // 构建Pipeline
-        Pipeline pipeline = PackagedProgramUtils.
-                getPipelineFromProgram(packagedProgram,
-                        new Configuration(),
-                        10,
-                        false);
+
+        // 获取Configuration
+        String configurationDirectory = CliFrontend.getConfigurationDirectoryFromEnv();
+
+        // 2. load the global configuration
+        // 加载 flink-conf.yaml构成 Configuration
+        Configuration configuration = GlobalConfiguration.loadConfiguration(configurationDirectory);
+
+
+        // 3. 加载jar包
+        ConfigUtils.encodeCollectionToConfig(
+                configuration,
+                PipelineOptions.JARS,
+                packagedProgram.getJobJarAndDependencies(),
+                URL::toString
+        );
+
+        ConfigUtils.encodeCollectionToConfig(
+                configuration,
+                PipelineOptions.CLASSPATHS,
+                packagedProgram.getClasspaths(),
+                URL::toString
+        );
+
+
+        Pipeline pipeline = this.wrapClassLoader(packagedProgram.getUserCodeClassLoader(),() -> {
+            try {
+                return PackagedProgramUtils.
+                        getPipelineFromProgram(packagedProgram,
+                                configuration,
+                                10,
+                                false);
+            } catch (ProgramInvocationException e) {
+                e.printStackTrace();
+                return null;
+            }
+        });
+
 
         // yarn-per-job模式
-        // todo 需要找到Configuration
-        new PlatformAbstractJobClusterExecutor<>(new YarnClusterClientFactory()).
-                execute(pipeline,new Configuration(),null);
+        return new PlatformAbstractJobClusterExecutor<>(new YarnClusterClientFactory()).
+                execute(pipeline,configuration,packagedProgram.getUserCodeClassLoader()).get().getJobID().toString();
 
     }
+
+
+    public <R> R wrapClassLoader(ClassLoader classLoader,Supplier<R> supplier) {
+        try (TemporaryClassLoaderContext tmpCl = TemporaryClassLoaderContext.of(classLoader)) {
+            return supplier.get();
+        }
+    }
+
 
 
 }

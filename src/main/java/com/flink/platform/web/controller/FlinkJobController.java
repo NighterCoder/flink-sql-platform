@@ -5,6 +5,7 @@ import com.flink.platform.web.common.entity.jar.JarConf;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.service.FlinkJobService;
+import com.flink.platform.web.service.JarManagerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,9 @@ public class FlinkJobController {
 
     @Autowired
     private FlinkJobService flinkJobService;
+
+    @Autowired
+    private JarManagerService jarManagerService;
 
     /**
      * 创建Session
@@ -55,16 +59,17 @@ public class FlinkJobController {
      * @param jar jar包文件
      */
     @PostMapping("/jar/upload")
-    public void upload(@RequestParam(value = "jar") MultipartFile jar) {
-
+    public void upload(@RequestParam(value = "jar") MultipartFile jar) throws Exception {
+        jarManagerService.upload(jar);
     }
 
     /**
      * 提交Jar包
      * @param jarConf jar提交参数类
      */
-    public void submit(@RequestBody JarConf jarConf){
-
+    @PostMapping("/jar/submit")
+    public String submit(@RequestBody JarConf jarConf) throws Exception {
+        return flinkJobService.submitJar(jarConf);
     }
 
 

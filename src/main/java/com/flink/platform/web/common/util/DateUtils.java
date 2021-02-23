@@ -1,6 +1,6 @@
 package com.flink.platform.web.common.util;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -13,7 +13,7 @@ public class DateUtils {
 
 
 
-    public static String format(LocalDate date, String format) {
+    public static String format(LocalDateTime date, String format) {
         return date.format(DateTimeFormatter.ofPattern(format));
     }
 
