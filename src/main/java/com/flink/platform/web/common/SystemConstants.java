@@ -7,13 +7,17 @@ import java.util.List;
 
 public interface SystemConstants {
 
-     List<String> AVAILABLE_PLANNERS = Arrays.asList(
+    // 可用的FLINK执行PLANNER
+    List<String> AVAILABLE_EXECUTION_PLANNERS = Arrays.asList(
             ExecutionEntry.EXECUTION_PLANNER_VALUE_OLD,
             ExecutionEntry.EXECUTION_PLANNER_VALUE_BLINK);
 
+    // 可用的FLINK执行TYPE
     List<String> AVAILABLE_EXECUTION_TYPES = Arrays.asList(
             ExecutionEntry.EXECUTION_TYPE_VALUE_BATCH,
             ExecutionEntry.EXECUTION_TYPE_VALUE_STREAMING);
 
+    // FLINK的lib jar包目录
+    String FLINK_LIB_DIR = "lib";
 
 }

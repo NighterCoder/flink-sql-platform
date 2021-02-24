@@ -16,8 +16,7 @@ public class PlatformApplication {
     public static void main(String[] args) {
         log.info("##########platform服务开始启动############");
 
-        //todo windows系统本地调试需要设置下环境变量
-        System.setProperty("HADOOP_CONF_DIR", "C:\\resources\\flink-sql-platform\\src\\main\\resources\\dev");
+        System.setProperty("HADOOP_USER_NAME", "hdfs");
 
         SpringApplication.run(PlatformApplication.class, args);
         log.info("##########platform服务启动完毕############");
