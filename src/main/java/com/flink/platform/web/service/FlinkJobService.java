@@ -18,6 +18,8 @@ import org.apache.flink.client.program.PackagedProgramUtils;
 import org.apache.flink.client.program.ProgramInvocationException;
 import org.apache.flink.configuration.*;
 import org.apache.flink.util.TemporaryClassLoaderContext;
+import org.apache.flink.yarn.configuration.YarnConfigOptions;
+import org.apache.flink.yarn.configuration.YarnDeploymentTarget;
 import org.apache.flink.yarn.configuration.YarnLogConfigUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -116,7 +118,13 @@ public class FlinkJobService {
         Configuration configuration = GlobalConfiguration.loadConfiguration(configurationDirectory);
         configuration.set(
                 DeploymentOptions.TARGET,
-                "YARN_PER_JOB");
+                YarnDeploymentTarget.PER_JOB.getName());
+
+        // 可以在这里设置 flink-dist*.jar
+        // 后面不需要 setLocalJarPath
+        configuration.set(YarnConfigOptions.FLINK_DIST_JAR,"");
+
+
 
 
         // 3. 构建PackagedProgram

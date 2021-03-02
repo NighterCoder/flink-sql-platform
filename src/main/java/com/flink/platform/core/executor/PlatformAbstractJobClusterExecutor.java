@@ -56,7 +56,7 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
         for (File ele : Objects.requireNonNull(file.listFiles())) {
             URL url = ele.toURI().toURL();
             if (!url.toString().contains("flink-dist")) {
-                jobGraph.addJar(new org.apache.flink.core.fs.Path(url.toString()));
+               // jobGraph.addJar(new org.apache.flink.core.fs.Path(url.toString()));
             } else {
                 flinkDist = new org.apache.hadoop.fs.Path(url.toString());
             }

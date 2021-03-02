@@ -4,11 +4,11 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/deer?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false
     username: root
-    password:
+    password: 123456
 
 
 hdfs:
-  path: dev
+  path: test
   upload: /tmp/deer/upload
 
 
