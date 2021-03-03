@@ -47,6 +47,10 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
     @Override
     public CompletableFuture<JobClient> execute(Pipeline pipeline, Configuration configuration, ClassLoader classLoader) throws Exception {
 
+        // todo 这里需要加载flink sql自定义函数的jar包
+
+
+
         final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);
 
         // todo jobGraph 添加自定义方法jar包,之前已经set pipeline.classpaths 不知是否生效
@@ -63,7 +67,10 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
         }
 
         try (final ClusterDescriptor<ClusterID> clusterDescriptor = clusterClientFactory.createClusterDescriptor(configuration)) {
+
+            // todo
             ((YarnClusterDescriptor) clusterDescriptor).setLocalJarPath(Objects.requireNonNull(flinkDist));
+
             final ExecutionConfigAccessor configAccessor = ExecutionConfigAccessor.fromConfiguration(configuration);
             final ClusterSpecification clusterSpecification = clusterClientFactory.getClusterSpecification(configuration);
 

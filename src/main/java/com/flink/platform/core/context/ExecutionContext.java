@@ -450,6 +450,10 @@ public class ExecutionContext<ClusterID> {
     private void registerFunctions() {
         // 顺序注册
         Map<String, FunctionDefinition> functions = new LinkedHashMap<>();
+
+
+
+
         environment.getFunctions().forEach((name, entry) -> {
             final UserDefinedFunction function = FunctionService.createFunction(
                     entry.getDescriptor(), classLoader, false
@@ -458,6 +462,10 @@ public class ExecutionContext<ClusterID> {
         });
         // 注册自定义方法
         registerFunctions(functions);
+
+
+
+
     }
 
     private void registerFunctions(Map<String, FunctionDefinition> functions) {

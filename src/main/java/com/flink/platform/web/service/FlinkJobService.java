@@ -101,6 +101,7 @@ public class FlinkJobService {
 
     /**
      * Yarn 模式提交JAR包
+     * todo 支持Per Job模式和Session模式
      * 提交Jar包
      *
      * @param jarConf 参数类
@@ -140,7 +141,7 @@ public class FlinkJobService {
         // 开启日志,需要在目录下配置log4j.properties
         YarnLogConfigUtil.setLogConfigFileInConfig(configuration, configurationDirectory);
 
-        // 4. 加载jar包
+        // 4. 加载jar包, 用户jar包
         ConfigUtils.encodeCollectionToConfig(
                 configuration,
                 PipelineOptions.JARS,
@@ -174,8 +175,16 @@ public class FlinkJobService {
         return new PlatformYarnJobClusterExecutor(null, SystemConstants.FLINK_LIB_DIR).
                 execute(pipeline, configuration, packagedProgram.getUserCodeClassLoader()).get().getJobID().toString();
 
+    }
+
+
+    public void submitUdfJar(){
 
     }
+
+
+
+
 
 
     private <R> R wrapClassLoader(ClassLoader classLoader, Supplier<R> supplier) {

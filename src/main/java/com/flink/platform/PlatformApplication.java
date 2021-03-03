@@ -17,8 +17,8 @@ public class PlatformApplication {
         log.info("##########platform服务开始启动############");
 
         System.setProperty("HADOOP_USER_NAME", "hdfs");
-
         SpringApplication.run(PlatformApplication.class, args);
+
         log.info("##########platform服务启动完毕############");
     }
 
