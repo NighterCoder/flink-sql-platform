@@ -1,11 +1,15 @@
 package com.flink.platform.core.context;
 
-import cn.hutool.core.lang.func.Func;
+import com.alibaba.fastjson.JSON;
+import com.flink.platform.core.DeerHelper;
 import com.flink.platform.core.config.Environment;
+import com.flink.platform.core.config.UDFRegister;
 import com.flink.platform.core.config.entries.*;
 import com.flink.platform.core.exception.SqlExecutionException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -39,15 +43,19 @@ import org.apache.flink.table.factories.*;
 import org.apache.flink.table.functions.*;
 import org.apache.flink.table.module.Module;
 import org.apache.flink.table.module.ModuleManager;
-import org.apache.flink.table.planner.delegation.ExecutorBase;
 import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.util.FlinkException;
 import org.apache.flink.util.TemporaryClassLoaderContext;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
@@ -451,8 +459,20 @@ public class ExecutionContext<ClusterID> {
         // 顺序注册
         Map<String, FunctionDefinition> functions = new LinkedHashMap<>();
 
-
-
+        /**
+         * 获取数据库中注册的自定义方法函数
+         */
+        DeerEntry deerEntry = environment.getDeerEntry();
+        List<UDFRegister> registers = new DeerHelper(deerEntry).queryUdfRegisters();
+        for (UDFRegister register : registers) {
+            try {
+                functions.put(register.getFunctionName(),
+                        (FunctionDefinition) Class.forName(register.getClassName(), false, classLoader).newInstance());
+                LOG.info("register udf success:" + JSON.toJSONString(register));
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+                LOG.error("register udf error", e);
+            }
+        }
 
         environment.getFunctions().forEach((name, entry) -> {
             final UserDefinedFunction function = FunctionService.createFunction(
@@ -460,13 +480,55 @@ public class ExecutionContext<ClusterID> {
             );
             functions.put(name, function);
         });
+
         // 注册自定义方法
         registerFunctions(functions);
 
-
-
-
     }
+
+
+    /**
+     * 从hdfs上加载jar包下来,返回下载到本地的url
+     *
+     * @return jar包下载到本地的url列表
+     */
+    private List<URL> addUrlFromUdfRegister() {
+        // 路径前缀:/tmp/随机字段串/jar包名称
+        String uuid = UUID.randomUUID().toString();
+        String prefix = String.join(File.separator, "/tmp", uuid);
+
+        List<URL> urls = new ArrayList<>();
+        org.apache.hadoop.conf.Configuration config = new org.apache.hadoop.conf.Configuration();
+
+        // 获取List<UDFRegister>
+        List<UDFRegister> udfRegisters = new DeerHelper(environment.getDeerEntry()).queryUdfRegisters();
+        try (FileSystem fs = FileSystem.get(config)) {
+            for (UDFRegister udf : udfRegisters) {
+                String[] paths = Arrays.stream(udf.getJarName().split(";"))
+                        .map(String::trim)
+                        .filter(StringUtils::isNotBlank)
+                        .collect(Collectors.toList())
+                        .toArray(new String[]{});
+
+                for (String path : paths) {
+                    FSDataInputStream in = fs.open(new Path(path));
+                    // prefix + hdfs 路径
+                    String localPath = String.join(File.separator, prefix, path);
+                    File file = new File(localPath);
+                    // 如果当前file已存在,则删除
+                    FileUtils.forceDeleteOnExit(file);
+                    FileUtils.copyInputStreamToFile(in, file);
+
+                    urls.add(file.toURL());
+                    LOG.info("download jar srouce = " + path + ", local = " + file.toURL().toString());
+                }
+            }
+        } catch (IOException e) {
+            LOG.error("download jar error:", e);
+        }
+        return urls;
+    }
+
 
     private void registerFunctions(Map<String, FunctionDefinition> functions) {
         if (tableEnv instanceof StreamTableEnvironment) {

@@ -15,6 +15,7 @@ import org.apache.flink.core.execution.PipelineExecutor;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.yarn.YarnClusterDescriptor;
+import org.apache.flink.yarn.configuration.YarnConfigOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ResourceUtils;
@@ -53,14 +54,14 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
 
         final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);
 
-        // todo jobGraph 添加自定义方法jar包,之前已经set pipeline.classpaths 不知是否生效
+
         org.apache.hadoop.fs.Path flinkDist = null;
         File file = new File(this.flinkLibDir);
 
         for (File ele : Objects.requireNonNull(file.listFiles())) {
             URL url = ele.toURI().toURL();
             if (!url.toString().contains("flink-dist")) {
-               // jobGraph.addJar(new org.apache.flink.core.fs.Path(url.toString()));
+                // jobGraph.addJar(new org.apache.flink.core.fs.Path(url.toString()));
             } else {
                 flinkDist = new org.apache.hadoop.fs.Path(url.toString());
             }
@@ -68,7 +69,8 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
 
         try (final ClusterDescriptor<ClusterID> clusterDescriptor = clusterClientFactory.createClusterDescriptor(configuration)) {
 
-            // todo
+            // 可以在这里设置flink-dist*.jar, configuration.set(YarnConfigOptions.FLINK_DIST_JAR,"");
+            // 后面不需要 setLocalJarPath
             ((YarnClusterDescriptor) clusterDescriptor).setLocalJarPath(Objects.requireNonNull(flinkDist));
 
             final ExecutionConfigAccessor configAccessor = ExecutionConfigAccessor.fromConfiguration(configuration);

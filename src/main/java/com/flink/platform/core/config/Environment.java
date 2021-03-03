@@ -3,6 +3,7 @@ package com.flink.platform.core.config;
 import com.flink.platform.core.config.entries.*;
 import com.flink.platform.core.exception.SqlPlatformException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonMappingException;
+import org.apache.flink.table.descriptors.DescriptorProperties;
 
 import java.io.IOException;
 import java.net.URL;
@@ -24,9 +25,13 @@ public class Environment {
 
     public static final String DEPLOYMENT_ENTRY = "deployment";
 
+    public static final String DEER_ENTRY = "deer";
+
     private ServerEntry server;
 
     private SessionEntry session;
+
+    private DeerEntry deerEntry;
 
     private Map<String, ModuleEntry> modules;
 
@@ -52,6 +57,16 @@ public class Environment {
         this.execution = ExecutionEntry.DEFAULT_INSTANCE;
         this.configuration = ConfigurationEntry.DEFAULT_INSTANCE;
         this.deployment = DeploymentEntry.DEFAULT_INSTANCE;
+        // 添加 DeerEntry 信息
+        this.deerEntry = DeerEntry.DEFAULT_INSTANCE;
+    }
+
+    public DeerEntry getDeerEntry() {
+        return deerEntry;
+    }
+
+    public void setDeerEntry(Map<String, Object> config) {
+        this.deerEntry = DeerEntry.create(config);
     }
 
     public void setSession(Map<String, Object> config) {
@@ -267,6 +282,10 @@ public class Environment {
         // merge deployment properties
         mergedEnv.deployment = DeploymentEntry.merge(env1.getDeployment(), env2.getDeployment());
 
+        // merge deer properties
+        mergedEnv.deerEntry = DeerEntry.merge(env1.getDeerEntry(),env2.getDeerEntry());
+
+
         return mergedEnv;
     }
 
@@ -309,6 +328,8 @@ public class Environment {
 
         // does not change server properties
         enrichedEnv.server = env.getServer();
+
+        enrichedEnv.deerEntry = env.getDeerEntry();
 
         return enrichedEnv;
     }

@@ -121,12 +121,6 @@ public class FlinkJobService {
                 DeploymentOptions.TARGET,
                 YarnDeploymentTarget.PER_JOB.getName());
 
-        // 可以在这里设置 flink-dist*.jar
-        // 后面不需要 setLocalJarPath
-        configuration.set(YarnConfigOptions.FLINK_DIST_JAR,"");
-
-
-
 
         // 3. 构建PackagedProgram
         PackagedProgram packagedProgram =

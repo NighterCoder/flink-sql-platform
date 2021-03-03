@@ -99,7 +99,7 @@ functions: [] # empty list
 # Define catalogs here.
 
 catalogs:  # empty list
-# A typical catalog definition looks like:
+  # A typical catalog definition looks like:
   - name: myhive
     type: hive
     hive-conf-dir: /usr/local/Cellar/hive/3.1.2_1/libexec/conf
@@ -165,3 +165,9 @@ deployment:
 #==============================================================================
 
 # Properties that describe the cluster to which table programs are submitted to.
+
+# 添加数据库配置信息,查询自定义函数jar包等功能使用
+deer:
+  url: jdbc:mysql://127.0.0.1:3306/deer?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false
+  username: root
+  password: 123456
