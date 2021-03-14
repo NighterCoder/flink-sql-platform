@@ -31,7 +31,7 @@ public class Environment {
 
     private SessionEntry session;
 
-    private DeerEntry deerEntry;
+    private DeerEntry deer;
 
     private Map<String, ModuleEntry> modules;
 
@@ -58,15 +58,15 @@ public class Environment {
         this.configuration = ConfigurationEntry.DEFAULT_INSTANCE;
         this.deployment = DeploymentEntry.DEFAULT_INSTANCE;
         // 添加 DeerEntry 信息
-        this.deerEntry = DeerEntry.DEFAULT_INSTANCE;
+        this.deer = DeerEntry.DEFAULT_INSTANCE;
     }
 
-    public DeerEntry getDeerEntry() {
-        return deerEntry;
+    public DeerEntry getDeer() {
+        return deer;
     }
 
-    public void setDeerEntry(Map<String, Object> config) {
-        this.deerEntry = DeerEntry.create(config);
+    public void setDeer(Map<String, Object> config) {
+        this.deer = DeerEntry.create(config);
     }
 
     public void setSession(Map<String, Object> config) {
@@ -214,6 +214,8 @@ public class Environment {
         configuration.asMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
         sb.append("=================== Deployment ===================\n");
         deployment.asTopLevelMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
+        sb.append("=================== Deer ===================\n");
+        deer.asTopLevelMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
         return sb.toString();
     }
 
@@ -283,7 +285,7 @@ public class Environment {
         mergedEnv.deployment = DeploymentEntry.merge(env1.getDeployment(), env2.getDeployment());
 
         // merge deer properties
-        mergedEnv.deerEntry = DeerEntry.merge(env1.getDeerEntry(),env2.getDeerEntry());
+        mergedEnv.deer = DeerEntry.merge(env1.getDeer(),env2.getDeer());
 
 
         return mergedEnv;
@@ -329,7 +331,7 @@ public class Environment {
         // does not change server properties
         enrichedEnv.server = env.getServer();
 
-        enrichedEnv.deerEntry = env.getDeerEntry();
+        enrichedEnv.deer = env.getDeer();
 
         return enrichedEnv;
     }

@@ -462,7 +462,7 @@ public class ExecutionContext<ClusterID> {
         /**
          * 获取数据库中注册的自定义方法函数
          */
-        DeerEntry deerEntry = environment.getDeerEntry();
+        DeerEntry deerEntry = environment.getDeer();
         List<UDFRegister> registers = new DeerHelper(deerEntry).queryUdfRegisters();
         for (UDFRegister register : registers) {
             try {
@@ -501,7 +501,7 @@ public class ExecutionContext<ClusterID> {
         org.apache.hadoop.conf.Configuration config = new org.apache.hadoop.conf.Configuration();
 
         // 获取List<UDFRegister>
-        List<UDFRegister> udfRegisters = new DeerHelper(environment.getDeerEntry()).queryUdfRegisters();
+        List<UDFRegister> udfRegisters = new DeerHelper(environment.getDeer()).queryUdfRegisters();
         try (FileSystem fs = FileSystem.get(config)) {
             for (UDFRegister udf : udfRegisters) {
                 String[] paths = Arrays.stream(udf.getJarName().split(";"))
