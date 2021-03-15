@@ -1,7 +1,9 @@
 package com.flink.platform.web.service;
 
+import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.exception.StreamNodeParseException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
@@ -11,6 +13,7 @@ import org.apache.flink.streaming.api.operators.StreamOperator;
 import org.apache.flink.streaming.api.operators.StreamSink;
 import org.apache.flink.streaming.api.operators.StreamSource;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumerBase;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducerBase;
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicsDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,7 @@ import org.apache.flink.api.java.utils.ParameterTool;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -47,9 +51,13 @@ public class FlinkLineageAnalysisUtils {
                 .map(streamGraph::getStreamNode)
                 .collect(Collectors.toList());
         // 通过SourceNode分析数据源
-        sourceNodes.forEach(FlinkLineageAnalysisUtils::analysisStreamNode);
+        sourceNodes.forEach(streamNode -> {
+            analysisStreamNode(streamGraph, streamNode);
+        });
         // 通过SinkNode分析数据sink
-        sinkNodes.forEach(FlinkLineageAnalysisUtils::analysisStreamNode);
+        sinkNodes.forEach(streamNode -> {
+            analysisStreamNode(streamGraph, streamNode);
+        });
 
     }
 
@@ -58,7 +66,7 @@ public class FlinkLineageAnalysisUtils {
      *
      * @param streamNode 各算子节点StreamNode
      */
-    private static void analysisStreamNode(StreamNode streamNode) {
+    private static void analysisStreamNode(StreamGraph streamGraph, StreamNode streamNode) {
         StreamOperator operator = streamNode.getOperator();
         // 属于StreamSource
         if (operator instanceof StreamSource) {
@@ -103,7 +111,7 @@ public class FlinkLineageAnalysisUtils {
 
 
             } catch (Exception e) {
-                throw new StreamNodeParseException("解析StreamNode获取SourceFunction构造函数参数错误");
+                throw new StreamNodeParseException("解析StreamNode获取SourceFunction构造函数参数错误", e);
             }
 
         } else if (operator instanceof StreamSink) {
@@ -116,20 +124,24 @@ public class FlinkLineageAnalysisUtils {
                 if (clazz.isAssignableFrom(SinkFunction.class)) {
                     LOG.info("解析Stream Jar的Sink");
                     // SinkFunction有很多实现类
-                    // 自定义SinkFunction,通过获取open方法的参数来解析信息
+                    // 1.自定义SinkFunction,首先固定在编写jar包时,将sink的信息用固定属性封装,使用GlobalJobParameters加载
                     if (clazz.isAssignableFrom(RichSinkFunction.class)) {
                         RichSinkFunction function = (RichSinkFunction) ((StreamSink) operator).getUserFunction();
                         // 获取全局参数
                         // 这里需要固定化,不同的数据源对应不同的配置连接属性
-                        ParameterTool tool = (ParameterTool) function.getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+                        ParameterTool parameterTool = (ParameterTool) streamGraph.getExecutionConfig().getGlobalJobParameters();
+                        String driver = parameterTool.get(SystemConstants.SINK_DRIVER);
+                        String url = parameterTool.get(SystemConstants.SINK_URL);
+                        String table = parameterTool.get(SystemConstants.SINK_TABLE);
+
+                        LOG.info(driver);
+                    }else if(clazz.isAssignableFrom(FlinkKafkaProducerBase.class)){
+                        // 2.使用Kafka作为Producer
 
                     }
-
-
                 }
-
             } catch (Exception e) {
-                throw new StreamNodeParseException("解析StreamNode获取SinkFunction构造函数参数错误");
+                throw new StreamNodeParseException("解析StreamNode获取SinkFunction构造函数参数错误", e);
             }
 
 

@@ -53,7 +53,9 @@ public class FlinkJobController {
 
 
     /**
-     * todo 目前jar包支持流处理,批处理定时调度待完善
+     * todo 1.目前jar包支持流处理,批处理定时调度待完善
+     * todo 2.上传之后保存对应的jar包地址
+     *
      * 上传Jar包,并且保存到数据库
      *
      * @param jar jar包文件

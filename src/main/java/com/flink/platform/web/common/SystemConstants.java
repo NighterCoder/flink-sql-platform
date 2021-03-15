@@ -20,4 +20,10 @@ public interface SystemConstants {
     // FLINK的lib jar包目录
     String FLINK_LIB_DIR = "lib";
 
+    String SINK_DRIVER="sink.driver";
+    String SINK_URL="sink.url";
+    String SINK_TABLE="sink.table";
+
+
+
 }
