@@ -14,8 +14,10 @@ import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.core.execution.PipelineExecutor;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.jobgraph.JobGraph;
+import org.apache.flink.yarn.YarnClusterClientFactory;
 import org.apache.flink.yarn.YarnClusterDescriptor;
 import org.apache.flink.yarn.configuration.YarnConfigOptions;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ResourceUtils;
@@ -49,9 +51,6 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
     public CompletableFuture<JobClient> execute(Pipeline pipeline, Configuration configuration, ClassLoader classLoader) throws Exception {
 
         // todo 这里需要加载flink sql自定义函数的jar包
-
-
-
         final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);
 
 
@@ -79,6 +78,17 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
             final ClusterClientProvider<ClusterID> clusterClientProvider = clusterDescriptor
                     .deployJobCluster(clusterSpecification, jobGraph, configAccessor.getDetachedMode());
             LOG.info("Job has been submitted with JobID " + jobGraph.getJobID());
+
+            // todo 保存ApplicationId
+            ApplicationId applicationId = ((YarnClusterClientFactory)clusterClientFactory).getClusterId(configuration);
+
+
+            // todo JobId需要保存到数据库中
+
+            //clusterClientProvider.getClusterClient();
+
+
+
 
             return CompletableFuture.completedFuture(
                     new ClusterClientJobClientAdapter<>(clusterClientProvider, jobGraph.getJobID(), classLoader));

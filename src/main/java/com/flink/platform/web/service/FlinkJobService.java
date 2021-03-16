@@ -176,9 +176,24 @@ public class FlinkJobService {
     }
 
 
+    /**
+     * 1. 构造ApplicationId对象
+     */
+    public void stopJobWithSavepoint(){
+
+    }
+
+
+
+
+
     public void submitUdfJar(){
 
     }
+
+
+    //public void stop
+
 
 
 
