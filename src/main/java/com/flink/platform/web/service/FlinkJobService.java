@@ -5,22 +5,27 @@ import com.flink.platform.core.executor.PlatformYarnJobClusterExecutor;
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.common.entity.StatementResult;
-import com.flink.platform.web.common.entity.jar.JarConf;
+import com.flink.platform.web.common.entity.jar.JarJobConf;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.StatementState;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.manager.FlinkSessionManager;
 import com.flink.platform.web.manager.HDFSManager;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.client.cli.CliFrontend;
+import org.apache.flink.client.program.ClusterClient;
 import org.apache.flink.client.program.PackagedProgram;
 import org.apache.flink.client.program.PackagedProgramUtils;
 import org.apache.flink.client.program.ProgramInvocationException;
 import org.apache.flink.configuration.*;
 import org.apache.flink.streaming.api.graph.StreamGraph;
 import org.apache.flink.util.TemporaryClassLoaderContext;
+import org.apache.flink.yarn.YarnClusterClientFactory;
+import org.apache.flink.yarn.YarnClusterDescriptor;
 import org.apache.flink.yarn.configuration.YarnDeploymentTarget;
 import org.apache.flink.yarn.configuration.YarnLogConfigUtil;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +33,8 @@ import java.io.File;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 
@@ -104,12 +111,12 @@ public class FlinkJobService {
      * todo 支持Per Job模式和Session模式
      * 提交Jar包
      *
-     * @param jarConf 参数类
+     * @param jarJobConf 参数类
      */
-    public String submitJar(JarConf jarConf) throws Exception {
+    public String submitJar(JarJobConf jarJobConf) throws Exception {
         // 1. 先去下载jar包
-        String jarPath = jarConf.getUserJarPath();
-        String dest = "/tmp/" + jarConf.getUserJarName();
+        String jarPath = jarJobConf.getUserJarPath();
+        String dest = "/tmp/" + jarJobConf.getUserJarName();
         hdfsManager.download(jarPath, dest);
         // 构建jar File
         File jar = new File(dest);
@@ -126,11 +133,11 @@ public class FlinkJobService {
         PackagedProgram packagedProgram =
                 PackagedProgram.newBuilder()
                         .setJarFile(jar)
-                        .setUserClassPaths(jarConf.parseUserClassPaths())
-                        .setEntryPointClassName(jarConf.getEntryClass())
+                        .setUserClassPaths(jarJobConf.parseUserClassPaths())
+                        .setEntryPointClassName(jarJobConf.getEntryClass())
                         .setConfiguration(configuration)
-                        .setSavepointRestoreSettings(jarConf.parseSavepointRestoreSettings())
-                        .setArguments(jarConf.getArgs())
+                        .setSavepointRestoreSettings(jarJobConf.parseSavepointRestoreSettings())
+                        .setArguments(jarJobConf.getArgs())
                         .build();
         // 开启日志,需要在目录下配置log4j.properties
         YarnLogConfigUtil.setLogConfigFileInConfig(configuration, configurationDirectory);
@@ -177,9 +184,29 @@ public class FlinkJobService {
 
 
     /**
-     * 1. 构造ApplicationId对象
+     * 停止正在运行的任务
+     * @param jarJobId 任务id
      */
-    public void stopJobWithSavepoint(){
+    public void stopJobWithSavepoint(Integer jarJobId) throws ExecutionException, InterruptedException {
+        // todo 根据jarJobId 查询数据库返回 JarJobConf
+        JarJobConf jarJobConf = null;
+        String applicationId = jarJobConf.getApplicationId();
+        JobID jobID = jarJobConf.parseJobId();
+
+        String configurationDirectory = CliFrontend.getConfigurationDirectoryFromEnv();
+        Configuration configuration = GlobalConfiguration.loadConfiguration(configurationDirectory);
+        YarnClusterClientFactory clusterClientFactory = new YarnClusterClientFactory();
+
+        YarnClusterDescriptor clusterDescriptor = clusterClientFactory
+                .createClusterDescriptor(
+                        configuration);
+        ClusterClient<ApplicationId> clusterClient = clusterDescriptor.retrieve(applicationId).getClusterClient();
+        CompletableFuture<String> completableFuture = clusterClient.stopWithSavepoint(
+                jobID,
+                true,
+                jarJobConf.getSavepointPath());
+
+        String savepoint = completableFuture.get();
 
     }
 

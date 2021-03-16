@@ -3,6 +3,7 @@ package com.flink.platform.web.common.entity.jar;
 import lombok.Data;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
 
 import java.net.MalformedURLException;
@@ -12,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
-public class JarConf {
+public class JarJobConf {
     private Long id;
     private String userJarPath; // 用户Flink Jar包地址
     private String userJarName; // 用户Flink Jar包名称
@@ -38,7 +39,15 @@ public class JarConf {
      */
     private String[] args = new String[0];
 
-    //todo
+    /**
+     * Application ID
+     */
+    private String applicationId;
+
+    /**
+     * JobGraph生成的JobID
+     */
+    private String jobId;
 
     public List<URL> parseUserClassPaths() throws MalformedURLException {
         if (CollectionUtils.isNotEmpty(this.userClassPaths)) {
@@ -59,6 +68,12 @@ public class JarConf {
         return SavepointRestoreSettings.none();
     }
 
-
+    // 将JobID Str转换成JobID
+    public JobID parseJobId(){
+        if (StringUtils.isNotBlank(this.jobId)){
+            return JobID.fromHexString(this.jobId);
+        }
+        return null;
+    }
 
 }

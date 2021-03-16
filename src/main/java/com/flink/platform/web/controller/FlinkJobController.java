@@ -1,7 +1,7 @@
 package com.flink.platform.web.controller;
 
 import com.flink.platform.web.common.Result;
-import com.flink.platform.web.common.entity.jar.JarConf;
+import com.flink.platform.web.common.entity.jar.JarJobConf;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.service.FlinkJobService;
@@ -67,11 +67,11 @@ public class FlinkJobController {
 
     /**
      * 提交Jar包
-     * @param jarConf jar提交参数类
+     * @param jarJobConf jar提交参数类
      */
     @PostMapping("/jar/submit")
-    public String submit(@RequestBody JarConf jarConf) throws Exception {
-        return flinkJobService.submitJar(jarConf);
+    public String submit(@RequestBody JarJobConf jarJobConf) throws Exception {
+        return flinkJobService.submitJar(jarJobConf);
     }
 
 
