@@ -14,6 +14,7 @@ import com.flink.platform.web.manager.HDFSManager;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.client.cli.CliFrontend;
+import org.apache.flink.client.deployment.ClusterRetrieveException;
 import org.apache.flink.client.program.ClusterClient;
 import org.apache.flink.client.program.PackagedProgram;
 import org.apache.flink.client.program.PackagedProgramUtils;
@@ -26,6 +27,7 @@ import org.apache.flink.yarn.YarnClusterDescriptor;
 import org.apache.flink.yarn.configuration.YarnDeploymentTarget;
 import org.apache.flink.yarn.configuration.YarnLogConfigUtil;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -185,12 +187,16 @@ public class FlinkJobService {
 
     /**
      * 停止正在运行的任务
+     *
      * @param jarJobId 任务id
      */
-    public void stopJobWithSavepoint(Integer jarJobId) throws ExecutionException, InterruptedException {
+    public void stopJobWithSavepoint(Integer jarJobId) throws ExecutionException, InterruptedException, ClusterRetrieveException {
         // todo 根据jarJobId 查询数据库返回 JarJobConf
         JarJobConf jarJobConf = null;
-        String applicationId = jarJobConf.getApplicationId();
+        String applicationIdStr = jarJobConf.getApplicationId();
+        ApplicationId applicationId = ConverterUtils.toApplicationId(applicationIdStr);
+
+
         JobID jobID = jarJobConf.parseJobId();
 
         String configurationDirectory = CliFrontend.getConfigurationDirectoryFromEnv();
@@ -200,6 +206,7 @@ public class FlinkJobService {
         YarnClusterDescriptor clusterDescriptor = clusterClientFactory
                 .createClusterDescriptor(
                         configuration);
+
         ClusterClient<ApplicationId> clusterClient = clusterDescriptor.retrieve(applicationId).getClusterClient();
         CompletableFuture<String> completableFuture = clusterClient.stopWithSavepoint(
                 jobID,
@@ -208,21 +215,15 @@ public class FlinkJobService {
 
         String savepoint = completableFuture.get();
 
-    }
+        // todo 将savepoint更新到数据库
 
-
-
-
-
-    public void submitUdfJar(){
 
     }
 
 
-    //public void stop
+    public void submitUdfJar() {
 
-
-
+    }
 
 
 
