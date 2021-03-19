@@ -1,24 +1,22 @@
 package com.flink.platform.web.manager;
 
-import com.flink.platform.web.common.entity.FetchData;
+import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.enums.SessionState;
-
-import java.util.Map;
 
 /**
  * Created by 凌战 on 2021/2/20
  */
 public interface SessionManager {
 
-    //todo 优化
-    String createSession(String sessionName,
-                         String planner,
-                         String executionType,
-                         Map<String, String> properties);
+    String createSession(String sessionName, String executionType);
 
     SessionState statusSession(String sessionId);
 
     String appMasterUI(String sessionId) throws Exception;
 
-    FetchData submit(String statement, String sessionId);
+    StatementResult submit(String statement, String sessionId);
+
+    StatementResult fetch(String statement , String sessionId);
+
+
 }

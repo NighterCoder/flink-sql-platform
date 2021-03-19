@@ -4,6 +4,7 @@ import com.flink.platform.web.common.entity.JobSubmitDTO;
 import com.flink.platform.web.common.entity.SessionVO;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.analysis.SessionDO;
+import com.flink.platform.web.common.entity.login.LoginUser;
 import com.flink.platform.web.common.enums.ExecuteType;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.SessionType;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.jdbc.SQL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -48,16 +50,25 @@ public class DataAnalysisService {
      * @param et ExecuteType
      */
     public SessionVO getSession(SessionType st, ExecuteType et) {
-        // 1.todo 首先获取当前登录用户的用户名
-        String username = "test1";
+
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = loginUser.getUsername();
+
         // 工厂模式创建SessionManager
+        // 1.根据SessionType判断是FlinkSessionManager或者SparkSessionManager
         SessionManager sessionManager = sessionManagerFactory.create(st);
+
         // 2.根据用户名,sessionType,executeType来查询sessionId
         SessionDO sessionDO = sessionMapper.selectByConditions(username, st.getCode(), et.getCode());
+
         String sessionId;
         // 3.sessionId不存在,或者当前对应sessionId的session失效,重新创建
         if (sessionDO == null || sessionManager.statusSession(sessionDO.getSessionId()).equals(SessionState.NONE)) {
-            sessionId = sessionManager.createSession(username + "的session", null, et.getType(), Collections.emptyMap());
+            sessionId = sessionManager.createSession(username + "的session",
+                    null,
+                    et.getType(),
+                    Collections.emptyMap()
+            );
             if (sessionDO != null) {
                 // 先将旧记录逻辑删除
                 sessionMapper.deleteSessionByConditions(username, st.getCode(), et.getCode());
@@ -80,8 +91,10 @@ public class DataAnalysisService {
 
 
     /**
-     * 批量提交SQL
-     *
+     * 数据分析页面批量提交SQL
+     * 该场景下支持
+     * 1.Flink: yarn-session模式提交任务,不建议使用yarn-per-job,故前端没有放开
+     * 2.Spark: 使用Apache Livy的livy-session模式
      * @param dto dto
      */
     public StatementResult submit(JobSubmitDTO dto) {
@@ -106,9 +119,9 @@ public class DataAnalysisService {
         for (int i = 0; i < size; i++) {
             // 只返回最后一个语句的执行结果
             if (i == size - 1) {
-                return flinkJobService.submit(list.get(i), sessionId);
+                return sessionManager.submit(list.get(i), sessionId);
             }
-            flinkJobService.submit(list.get(i), sessionId);
+            sessionManager.submit(list.get(i), sessionId);
         }
         return new StatementResult();
     }
@@ -120,7 +133,7 @@ public class DataAnalysisService {
      */
     public StatementResult fetchData(JobSubmitDTO dto) {
         String sessionId = dto.getSessionId();
-        String jobID= dto.getJobId();
+        String jobID = dto.getJobId();
         long token = dto.getToken();
 
 

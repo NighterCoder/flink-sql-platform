@@ -232,6 +232,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         /**
          * 返回用户信息,这里没有包含权限信息
          *
+         * 返回的UserDetails放到Spring全局缓存SecurityContextHolder中
+         * 之后在代码中可以使用 CustomUserDetails myUserDetails= (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication() .getPrincipal();
+         * 获取用户信息
+         *
          * @param username 用户名
          */
         @Override

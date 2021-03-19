@@ -42,7 +42,7 @@ public class JarJobConf {
     /**
      * Application ID
      */
-    private String applicationId;
+    private String applicationId = "";
 
     /**
      * JobGraph生成的JobID

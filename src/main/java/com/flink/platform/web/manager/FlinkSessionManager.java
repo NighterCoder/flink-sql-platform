@@ -11,13 +11,14 @@ import com.flink.platform.core.rest.result.ResultSet;
 import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.core.rest.session.SessionID;
 import com.flink.platform.web.common.entity.FetchData;
+import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.SessionType;
+import com.flink.platform.web.common.enums.StatementState;
 import com.flink.platform.web.config.FlinkConfProperties;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.runtime.rest.messages.dataset.ClusterDataSetIdPathParameter;
-import org.apache.flink.util.StringUtils;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,28 +75,54 @@ public class FlinkSessionManager implements SessionManager {
 
 
     /**
+     * Flink只有在insert和select才存在jobId
+     * <p>
      * 执行SQL返回结果
+     * 1. 如果返回JobId,则需要继续执行
+     * 2. 如果返回JobId还不存在,则执行结束
      *
-     * @param statement 执行SQL
+     * @param statement 执行sql
      * @param sessionId sessionId
-     * @return FetchData
+     * @return StatementResult
      */
-    public FetchData submit(String statement, String sessionId) {
+    public StatementResult submit(String statement, String sessionId) {
+        StatementResult res = new StatementResult();
+        res.setStatement(statement);
+
         // todo 加上超时时间
         if (this.sessions.containsKey(sessionId)) {
             Session session = this.sessions.get(sessionId);
             Tuple2<ResultSet, SqlCommandParser.SqlCommand> result = session.runStatement(statement);
             ResultSet resultSet = result.f0;
+            // SQL类型,SELECT or INSET ...
             String statementType = result.f1.name();
 
             // 根据statementType不同,结果返回的也不一样
             // 策略模式
             ResultHandlerEnum handlerEnum = ResultHandlerEnum.from(statementType);
-            return handlerEnum.handle(resultSet);
+            FetchData fetchData = handlerEnum.handle(resultSet);
+
+            if (StringUtils.isNotBlank(fetchData.getJobId())) {
+                res.setJobId(fetchData.getJobId());
+                res.setState(StatementState.RUNNING);
+            } else {
+                res.setJobId(String.valueOf(System.currentTimeMillis()));
+                res.setState(StatementState.DONE);
+                res.setColumns(fetchData.getColumns());
+                res.setRows(fetchData.getRows());
+            }
+
+            res.setEnd(System.currentTimeMillis());
+            return res;
 
         } else {
             throw new SqlPlatformException("当前Session不存在");
         }
+    }
+
+    @Override
+    public StatementResult fetch(String statement, String sessionId) {
+        return null;
     }
 
     /**
@@ -123,28 +150,20 @@ public class FlinkSessionManager implements SessionManager {
      * 创建一个Session
      *
      * @param sessionName
-     * @param planner
      * @param executionType
-     * @param properties
      */
-    public String createSession(
-            String sessionName,
-            String planner,
-            String executionType,
-            Map<String, String> properties) {
+    public String createSession(String sessionName, String executionType) {
         checkSessionCount();
 
-        if (StringUtils.isNullOrWhitespaceOnly(sessionName)) {
+        if (StringUtils.isBlank(sessionName)) {
             sessionName = flinkConfProperties.getSessionName();
         }
-        if (StringUtils.isNullOrWhitespaceOnly(planner)) {
-            planner = flinkConfProperties.getPlanner();
-        }
-        if (StringUtils.isNullOrWhitespaceOnly(executionType)) {
+        String planner = flinkConfProperties.getPlanner();
+        if (StringUtils.isBlank(executionType)) {
             executionType = flinkConfProperties.getExecutionType();
         }
 
-        Map<String, String> newProperties = new HashMap<>(properties);
+        Map<String, String> newProperties = new HashMap<>();
         newProperties.put(Environment.EXECUTION_ENTRY + "." + ExecutionEntry.EXECUTION_PLANNER, planner);
         newProperties.put(Environment.EXECUTION_ENTRY + "." + ExecutionEntry.EXECUTION_TYPE, executionType);
 
@@ -170,7 +189,7 @@ public class FlinkSessionManager implements SessionManager {
         sessions.put(sessionId, session);
 
         LOG.info("Session: {} is created. sessionName: {}, planner: {}, executionType: {}, properties: {}.",
-                sessionId, sessionName, planner, executionType, properties);
+                sessionId, sessionName, planner, executionType, newProperties);
 
         return sessionId;
     }

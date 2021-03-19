@@ -45,6 +45,10 @@ public class DataAnalysisController {
     /**
      * 批量提交执行SQL
      *
+     * 该场景下支持
+     * 1.Flink: yarn-session模式提交任务,不建议使用yarn-per-job,故前端没有放开
+     * 2.Spark: 使用Apache Livy的livy-session模式
+     *
      * @param dto 前端参数类
      */
     @PostMapping("submit")

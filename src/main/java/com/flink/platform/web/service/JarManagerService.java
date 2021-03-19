@@ -1,10 +1,12 @@
 package com.flink.platform.web.service;
 
 import com.flink.platform.web.common.entity.jar.JarDTO;
+import com.flink.platform.web.common.entity.login.LoginUser;
 import com.flink.platform.web.manager.HDFSManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.flink.platform.web.common.util.DateUtils;
@@ -39,8 +41,8 @@ public class JarManagerService {
     public void upload(MultipartFile file) throws Exception {
         // 获取文件完整名[文件名+扩展名]
         String jarName=file.getOriginalFilename();
-        // todo 获取username
-        String username = "test";
+        LoginUser loginUser= (LoginUser) SecurityContextHolder.getContext().getAuthentication() .getPrincipal();
+        String username = loginUser.getUsername();
 
         JarDTO jarDTO = new JarDTO();
         jarDTO.setJarName(jarName);

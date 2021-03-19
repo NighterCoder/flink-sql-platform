@@ -1,11 +1,13 @@
 package com.flink.platform.web.service;
 
 import com.flink.platform.web.common.entity.function.FunctionDO;
+import com.flink.platform.web.common.entity.login.LoginUser;
 import com.flink.platform.web.manager.HDFSManager;
 import com.flink.platform.web.mapper.FunctionMapper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,9 +40,8 @@ public class FunctionService {
                      String className,
                      MultipartFile[] files) throws Exception {
 
-        // todo 集成shiro之后,获取当前用户
-        String username = "test";
-
+        LoginUser loginUser= (LoginUser) SecurityContextHolder.getContext().getAuthentication() .getPrincipal();
+        String username = loginUser.getUsername();
         FunctionDO functionDO = new FunctionDO();
         functionDO.setUsername(username);
         functionDO.setClassName(className);
