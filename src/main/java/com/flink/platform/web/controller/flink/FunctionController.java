@@ -1,4 +1,4 @@
-package com.flink.platform.web.controller;
+package com.flink.platform.web.controller.flink;
 
 
 import com.flink.platform.web.common.Result;
