@@ -26,6 +26,10 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 /**
+ * 目前支持对
+ * 1. Flink流处理Jar包的血缘分析 [表级别-> source表到sink表]
+ * todo 2. Flink SQL流处理或者批处理的血缘分析 [字段级别]
+ *
  * Created by 凌战 on 2021/3/3
  */
 public class FlinkLineageAnalysisUtils {
@@ -133,7 +137,7 @@ public class FlinkLineageAnalysisUtils {
                         String table = parameterTool.get(SystemConstants.SINK_TABLE);
 
                         LOG.info(driver);
-                    }else if(clazz.isAssignableFrom(FlinkKafkaProducerBase.class)){
+                    } else if (clazz.isAssignableFrom(FlinkKafkaProducerBase.class)) {
                         // 2.使用Kafka作为Producer
 
                     }
