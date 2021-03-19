@@ -53,15 +53,12 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
         // todo 这里需要加载flink sql自定义函数的jar包
         final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);
 
-
         org.apache.hadoop.fs.Path flinkDist = null;
         File file = new File(this.flinkLibDir);
 
         for (File ele : Objects.requireNonNull(file.listFiles())) {
             URL url = ele.toURI().toURL();
-            if (!url.toString().contains("flink-dist")) {
-                // jobGraph.addJar(new org.apache.flink.core.fs.Path(url.toString()));
-            } else {
+            if (url.toString().contains("flink-dist")) {
                 flinkDist = new org.apache.hadoop.fs.Path(url.toString());
             }
         }
