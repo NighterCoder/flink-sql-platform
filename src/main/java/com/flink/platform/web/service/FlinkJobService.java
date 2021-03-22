@@ -65,7 +65,7 @@ public class FlinkJobService {
         }
         String sessionId;
         try {
-            sessionId = sessionManager.createSession(sessionName, planner, executionType, properties);
+            sessionId = sessionManager.createSession(sessionName, executionType);
         } catch (Exception e) {
             throw new SqlPlatformException(e.getMessage());
         }
@@ -92,20 +92,7 @@ public class FlinkJobService {
         StatementResult result = new StatementResult();
         result.setStatement(sql);
         // jobId is not null only after job is submitted
-        FetchData fetchData = sessionManager.submit(sql, sessionId);
-        if (fetchData.getJobId() != null) {
-            // JobId依旧存在,还在执行当中
-            result.setJobId(fetchData.getJobId());
-            result.setState(StatementState.RUNNING);
-        } else {
-            //JobId不存在
-            result.setState(StatementState.DONE);
-            result.setColumns(fetchData.getColumns());
-            result.setRows(fetchData.getRows());
-        }
-        result.setEnd(System.currentTimeMillis());
-
-        return result;
+        return sessionManager.submit(sql, sessionId);
     }
 
     /**

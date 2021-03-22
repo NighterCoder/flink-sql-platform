@@ -70,6 +70,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 
         // 访问控制
+        // 登录验证之后,访问相关url验证当前用户是否有权限
         http.authorizeRequests().antMatchers(authPath).access("@webSecurityConfig.hasPermission(request,authentication)");
         http.authorizeRequests().antMatchers("/**").authenticated();
 
@@ -106,6 +107,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        // 每次登陆都会加载用户信息服务查找
         LoginUserDetailsService userDetailsService = new LoginUserDetailsService();
         userDetailsService.setJdbcTemplate(jdbcTemplate);
         // 根据用户名查找当前用户的身份信息

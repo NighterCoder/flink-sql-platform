@@ -15,12 +15,12 @@ CREATE TABLE `session` (
 
 -- 资源表(可以理解为平台中的菜单,不同角色看到的菜单列表是不一样的)
 CREATE TABLE IF NOT EXISTS `auth_resource`  (
-  `id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `code` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `url` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   `parent_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
-  `weight` int(11) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `weight` int(11)  NOT NULL,
   `icon` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   `created` datetime(0) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `auth_resource`  (
 
 -- 角色表
 CREATE TABLE IF NOT EXISTS `auth_role`  (
-  `id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `code` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `created` datetime(0) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `auth_role`  (
 
 -- 角色资源表(不同角色拥有对不同资源的权限)
 CREATE TABLE IF NOT EXISTS `auth_role_resource`  (
-  `id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `role` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `resource` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `auth_role_resource`  (
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS `auth_user`  (
-  `id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `password` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `nickname` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS `auth_user`  (
 
 -- 用户-角色表
 CREATE TABLE IF NOT EXISTS `auth_user_role`  (
-  `id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `role` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE

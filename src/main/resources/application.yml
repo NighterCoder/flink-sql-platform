@@ -9,7 +9,7 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/deer?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=false
     username: root
-    password:
+    password: 123456
 
   servlet:
     multipart:
@@ -19,6 +19,15 @@ spring:
 hdfs:
   path: test
   upload: /tmp/deer/upload
+
+
+####Spark Livy相关配置
+spark:
+  livy:
+    url: http://localhost:8998
+    hive-file: /Users/lingzhan/Documents/codes/resources/flink-sql-platform/src/main/resources/test/hive-site.xml
+  dynamicAllocation: false
+
 
 
 ####Flink SQL执行相关配置

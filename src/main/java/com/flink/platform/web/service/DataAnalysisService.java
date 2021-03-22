@@ -65,9 +65,8 @@ public class DataAnalysisService {
         // 3.sessionId不存在,或者当前对应sessionId的session失效,重新创建
         if (sessionDO == null || sessionManager.statusSession(sessionDO.getSessionId()).equals(SessionState.NONE)) {
             sessionId = sessionManager.createSession(username + "的session",
-                    null,
-                    et.getType(),
-                    Collections.emptyMap()
+                    et.getType()
+                    
             );
             if (sessionDO != null) {
                 // 先将旧记录逻辑删除
