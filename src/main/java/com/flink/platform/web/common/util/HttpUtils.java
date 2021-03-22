@@ -16,7 +16,40 @@ import java.io.IOException;
 @Slf4j
 public class HttpUtils {
 
-    public static JSONObject post(String url,Object body){
+
+    /**
+     * get请求
+     *
+     * @param url
+     */
+    public static JSONObject get(String url) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setErrorHandler(new CustomResponseErrorHandler());
+        ResponseEntity<String> json = restTemplate.getForEntity(url, String.class);
+        int code = json.getStatusCodeValue();
+        if (code == HttpStatus.OK.value()){
+            return JSONObject.parseObject(json.getBody());
+        }else {
+            log.error("错误码：{}, 错误描述：{}", json.getStatusCodeValue(), json.getBody());
+            throw new SqlPlatformException(json.getBody());
+        }
+    }
+
+
+    public static ResponseEntity<String> getForEntity(String url){
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setErrorHandler(new CustomResponseErrorHandler());
+        return restTemplate.getForEntity(url,String.class);
+    }
+
+
+    /**
+     * post请求
+     *
+     * @param url
+     * @param body
+     */
+    public static JSONObject post(String url, Object body) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -25,7 +58,7 @@ public class HttpUtils {
          * 1. 请求参数,一般是HashMap
          * 2. Header参数
          */
-        HttpEntity<Object> request = new HttpEntity<>(body,headers);
+        HttpEntity<Object> request = new HttpEntity<>(body, headers);
 
 
         RestTemplate restTemplate = new RestTemplate();
@@ -47,8 +80,7 @@ public class HttpUtils {
     }
 
 
-
-    static class CustomResponseErrorHandler implements ResponseErrorHandler{
+    static class CustomResponseErrorHandler implements ResponseErrorHandler {
 
         @Override
         public boolean hasError(ClientHttpResponse clientHttpResponse) throws IOException {
@@ -60,7 +92,6 @@ public class HttpUtils {
 
         }
     }
-
 
 
 }

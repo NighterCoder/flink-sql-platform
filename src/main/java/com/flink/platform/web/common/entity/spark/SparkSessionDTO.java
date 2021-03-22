@@ -18,12 +18,12 @@ import java.util.Map;
 @Slf4j
 public class SparkSessionDTO {
     private String kind = "sql";
-    private String proxyUser = "hdfs";
-    private String driverMemory = "1G";
+    private String proxyUser = "root";
+    private String driverMemory = "200M";
     private Integer driverCores = 1;
-    private String executorMemory = "1G";
-    private Integer executorCores = 2;
-    private Integer numExecutors = 2;
+    private String executorMemory = "400M";
+    private Integer executorCores = 1;
+    private Integer numExecutors = 1;
     /**
      * Session的名称
      */

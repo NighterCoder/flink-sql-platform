@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.spark.SparkSessionDTO;
 import com.flink.platform.web.common.enums.SessionState;
+import com.flink.platform.web.common.enums.SparkSessionState;
 import com.flink.platform.web.common.util.HttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +32,10 @@ public class SparkSessionManager implements SessionManager {
     public Boolean dynamicAllocation;
 
 
-    public static final  String CREATE_URL_FORMAT = "%s/sessions";
+    private static final String CREATE_URL_FORMAT = "%s/sessions";
+    private static final String STATUS_URL_FORMAT = "%s/sessions/%s/state";
+    private static final String MASTER_URL_FORMAT = "%s/sessions/%s";
+    private static final String DELETE_URL_FORMAT = "%s/sessions/%s";
 
 
     @Override
@@ -44,13 +48,21 @@ public class SparkSessionManager implements SessionManager {
 
     @Override
     public SessionState statusSession(String sessionId) {
-        return null;
+        JSONObject json = HttpUtils.get(String.format(STATUS_URL_FORMAT,url,sessionId));
+        String state = json.getString("state");
+        return SparkSessionState.stateOf(state);
     }
 
     @Override
     public String appMasterUI(String sessionId) throws Exception {
+        JSONObject json = HttpUtils.get(String.format(MASTER_URL_FORMAT,url,sessionId));
+        JSONObject appInfo = json.getJSONObject("appInfo");
         return null;
     }
+
+
+
+
 
     @Override
     public StatementResult submit(String statement, String sessionId) {
@@ -60,6 +72,11 @@ public class SparkSessionManager implements SessionManager {
     @Override
     public StatementResult fetch(String statement, String sessionId) {
         return null;
+    }
+
+
+    public void deleteSession(String sessionId){
+        HttpUtils.get(String.format(DELETE_URL_FORMAT,url,sessionId));
     }
 
 

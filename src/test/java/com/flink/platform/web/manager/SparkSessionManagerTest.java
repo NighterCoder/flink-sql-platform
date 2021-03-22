@@ -20,12 +20,21 @@ public class SparkSessionManagerTest {
 
     @Test
     public void testCreateSession() {
+        //sessionManager.deleteSession("1");
         String sessionId =  sessionManager.createSession("testSession",null);
         log.info("创建的Livy Session:"+sessionId);
     }
 
 
+    @Test
+    public void testGetMasterUrl() throws Exception {
 
+
+
+        String sessionId = "4";
+        String masterUrl =  sessionManager.appMasterUI(sessionId);
+        log.info("创建的Livy Session 对应 master url:"+masterUrl);
+    }
 
 
 
