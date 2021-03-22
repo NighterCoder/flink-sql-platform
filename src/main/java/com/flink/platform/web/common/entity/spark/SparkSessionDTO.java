@@ -18,10 +18,10 @@ import java.util.Map;
 @Slf4j
 public class SparkSessionDTO {
     private String kind = "sql";
-    private String proxyUser = "root";
-    private String driverMemory = "200M";
+    private String proxyUser = "lingzhan";
+    private String driverMemory = "1G";
     private Integer driverCores = 1;
-    private String executorMemory = "400M";
+    private String executorMemory = "1G";
     private Integer executorCores = 1;
     private Integer numExecutors = 1;
     /**

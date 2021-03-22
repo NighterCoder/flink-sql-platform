@@ -20,8 +20,8 @@ public class SparkSessionManagerTest {
 
     @Test
     public void testCreateSession() {
-        //sessionManager.deleteSession("1");
-        String sessionId =  sessionManager.createSession("testSession",null);
+        //sessionManager.deleteSession("0");
+        String sessionId =  sessionManager.createSession("testSession7",null);
         log.info("创建的Livy Session:"+sessionId);
     }
 
