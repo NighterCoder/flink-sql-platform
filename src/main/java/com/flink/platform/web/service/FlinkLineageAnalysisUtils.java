@@ -168,6 +168,12 @@ public class FlinkLineageAnalysisUtils {
 
     /**
      * 对Flink SQL语句进行解析
+     * todo 1.Query(select,insert into,insert overwrite)  对应 SqlInsert RichSqlInsert
+     * todo 2.CreateTable 对应 SqlCreateTable
+     * todo 3.CreateTableAsSelect 对应 // Flink SQL没有create table as
+     * todo 4.DropTable 对应 SqlDropTable
+     * todo 5.CreateView 对应 SqlCreateView // CreateViewAsSelect
+     * todo 6.AlterView 对应 SqlAlterView
      *
      * @param statement SQL语句
      */

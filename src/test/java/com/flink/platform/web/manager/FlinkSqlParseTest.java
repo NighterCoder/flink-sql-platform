@@ -105,10 +105,11 @@ public class FlinkSqlParseTest {
                 "         GROUP BY u.name\n";
         String sql3 = "CREATE  VIEW   MyTable   AS   SELECT 1+1 FROM y";
 
+        String sql4 = "INSERT OVERWRITE other SELECT a FROM t";
 
+        //String sql5 = "CREATE  TABLE   MyTable   AS   SELECT a,b,c FROM y";
 
-
-        List<String> list = parseFlinkSql(sql3);
+        List<String> list = parseFlinkSql(sql4);
         log.info(list.size() + "");
     }
 
