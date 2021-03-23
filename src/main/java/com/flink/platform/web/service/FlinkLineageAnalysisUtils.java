@@ -186,7 +186,8 @@ public class FlinkLineageAnalysisUtils {
                 );
                 List<SqlNode> sqlNodeList = parser.parseStmtList().getList();
 
-
+                List<LineageVO> input = new ArrayList<>();
+                List<LineageVO> output = new ArrayList<>();
 
 
 
@@ -218,18 +219,25 @@ public class FlinkLineageAnalysisUtils {
                                 }
 
                                 return columnMap;
-
                             }).collect(Collectors.toList());
 
                             // 当前表创建来源信息,propertyList,这里不解析,要求此类表在元数据功能模块下创建
                             // 分区键 partitionKey
                             LineageVO lineageVO = new LineageVO(tableName,columnInfo);
-
+                            input.add(lineageVO);
 
                         } else if (sqlNode instanceof SqlCreateView) {
 
                             String viewName = ((SqlCreateView) sqlNode).getViewName().toString();
-
+//                            List<Map<String,String>> columnInfo = ((SqlCreateView) sqlNode).getFieldList().getList().stream().map(s -> {
+//
+//                                Map<String,String> columnMap = new HashMap<>();
+//
+//                                if ()
+//
+//
+//
+//                            });
 
 
                         }

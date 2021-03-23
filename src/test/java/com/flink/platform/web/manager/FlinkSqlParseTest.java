@@ -11,7 +11,6 @@ import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 import org.junit.Test;
 
-import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,19 +46,19 @@ public class FlinkSqlParseTest {
                             String tableName = ((SqlCreateTable) sqlNode).getTableName().toString();
                             // 当前表的字段列表
                             // SqlNode -> SqlTableColumn -> (SqlRegularColumn,SqlComputedColumn)
-                            List<Map<String,String>> columnInfo =  ((SqlCreateTable) sqlNode).getColumnList().getList().stream().map(s -> {
+                            List<Map<String, String>> columnInfo = ((SqlCreateTable) sqlNode).getColumnList().getList().stream().map(s -> {
 
-                                Map<String,String> columnMap = new HashMap<>();
+                                Map<String, String> columnMap = new HashMap<>();
 
                                 if (s instanceof SqlTableColumn.SqlRegularColumn) {
                                     String columnName = ((SqlTableColumn.SqlRegularColumn) s).getName().toString();
                                     String columnType = ((SqlTableColumn.SqlRegularColumn) s).getType().getTypeNameSpec().getTypeName().toString();
-                                    columnMap.put(columnName,columnType);
+                                    columnMap.put(columnName, columnType);
 
                                 } else if (s instanceof SqlTableColumn.SqlComputedColumn) {
                                     String columnName = ((SqlTableColumn.SqlComputedColumn) s).getName().toString();
                                     String exprStr = ((SqlTableColumn.SqlComputedColumn) s).getExpr().toString();
-                                    columnMap.put(columnName,exprStr);
+                                    columnMap.put(columnName, exprStr);
 
                                 } else {
                                     throw new FlinkSqlParseException("当前CREATE SQL解析有误,请联系开发人员");
@@ -71,7 +70,7 @@ public class FlinkSqlParseTest {
 
                             // 当前表创建来源信息,propertyList,这里不解析,要求此类表在元数据功能模块下创建
                             // 分区键 partitionKey
-                            log.info(columnInfo.size()+"");
+                            log.info(columnInfo.size() + "");
 
                         }
                     }
@@ -85,7 +84,7 @@ public class FlinkSqlParseTest {
     }
 
     @Test
-    public void testFlinSqlParse(){
+    public void testFlinSqlParse() {
 
         String sql = "CREATE TABLE T(\n"
                 + "  a int,\n"
@@ -95,21 +94,23 @@ public class FlinkSqlParseTest {
                 + ") WITH (\n"
                 + "  'k1' = 'v1',\n"
                 + "  'k2' = 'v2');\n"
-                + " WITH t as (select a,b,c from T) select a from t " ;
+                + " WITH t as (select a,b,c from T) select a from t ";
 
-        String sql1= "WITH t as (select complicated from table) select complicated from t";
+        String sql1 = "WITH t as (select complicated from table) select complicated from t";
 
-        String sql2 ="SELECT u.name,sum(o.amount) AS total\n" +
+        String sql2 = "SELECT u.name,sum(o.amount) AS total\n" +
                 "         FROM orders o\n" +
                 "         INNER JOIN users u ON o.uid = u.id\n" +
                 "         WHERE u.age < 27\n" +
                 "         GROUP BY u.name\n";
+        String sql3 = "CREATE  VIEW   MyTable   AS   SELECT 1+1 FROM y";
 
-        List<String> list = parseFlinkSql(sql);
-        log.info(list.size()+"");
+
+
+
+        List<String> list = parseFlinkSql(sql3);
+        log.info(list.size() + "");
     }
-
-
 
 
 }
