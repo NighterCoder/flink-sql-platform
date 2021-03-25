@@ -7,6 +7,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl;
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 import org.junit.Test;
@@ -31,11 +32,12 @@ public class FlinkSqlParseTest {
         if (sql != null && !sql.isEmpty()) {
             try {
                 SqlParser parser = SqlParser.create(sql, SqlParser.configBuilder()
-                        .setParserFactory(FlinkSqlParserImpl.FACTORY)
+                        .setParserFactory(FlinkSqlParserImpl.FACTORY) // 改成Hive
+                        .setParserFactory(FlinkHiveSqlParserImpl.FACTORY)
                         .setQuoting(BACK_TICK)
                         .setUnquotedCasing(Casing.TO_LOWER)   //字段名统一转化为小写
                         .setQuotedCasing(Casing.UNCHANGED)
-                        .setConformance(FlinkSqlConformance.DEFAULT)
+                        .setConformance(FlinkSqlConformance.HIVE) // 可以改成hive语义
                         .build()
                 );
                 List<SqlNode> sqlNodeList = parser.parseStmtList().getList();
@@ -84,7 +86,7 @@ public class FlinkSqlParseTest {
     }
 
     @Test
-    public void testFlinSqlParse() {
+    public void testFlinkSqlParse() {
 
         String sql = "CREATE TABLE T(\n"
                 + "  a int,\n"
@@ -94,6 +96,7 @@ public class FlinkSqlParseTest {
                 + ") WITH (\n"
                 + "  'k1' = 'v1',\n"
                 + "  'k2' = 'v2');\n"
+
                 + " WITH t as (select a,b,c from T) select a from t ";
 
         String sql1 = "WITH t as (select complicated from table) select complicated from t";
@@ -109,7 +112,23 @@ public class FlinkSqlParseTest {
 
         //String sql5 = "CREATE  TABLE   MyTable   AS   SELECT a,b,c FROM y";
 
-        List<String> list = parseFlinkSql(sql4);
+        String sql6 = "CREATE EXTERNAL TABLE `fs_table`(\n" +
+                "  `user_id` string, \n" +
+                "  `order_amount` double)\n" +
+                "PARTITIONED BY ( \n" +
+                "  `dt` string, \n" +
+                "  `h` string, \n" +
+                "  `m` string)\n" +
+                "stored as ORC \n" +
+                "TBLPROPERTIES (\n" +
+                "  'sink.partition-commit.policy.kind'='metastore',\n" +
+                "  'partition.time-extractor.timestamp-pattern'='$dt $h:$m:00'\n" +
+                ")\n";
+
+
+
+
+        List<String> list = parseFlinkSql(sql);
         log.info(list.size() + "");
     }
 

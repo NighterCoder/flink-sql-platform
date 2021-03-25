@@ -13,6 +13,7 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.hive.ddl.SqlCreateHiveTable;
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
@@ -168,7 +169,7 @@ public class FlinkLineageAnalysisUtils {
 
     /**
      * 对Flink SQL语句进行解析
-     * todo 1.Query(select,insert into,insert overwrite)  对应 SqlInsert RichSqlInsert
+     * todo 1.Query(select,insert into,insert overwrite)  对应  SqlInsert RichSqlInsert
      * todo 2.CreateTable 对应 SqlCreateTable
      * todo 3.CreateTableAsSelect 对应 // Flink SQL没有create table as
      * todo 4.DropTable 对应 SqlDropTable
@@ -201,8 +202,10 @@ public class FlinkLineageAnalysisUtils {
                 if (sqlNodeList != null && !sqlNodeList.isEmpty()) {
                     for (SqlNode sqlNode : sqlNodeList) {
                         // todo 补充其他SqlNode信息
+
+                        // todo 1.CreateTable 类型一般是 SqlCreateHiveTable 或者 带有with信息
                         if (sqlNode instanceof SqlCreateTable) {
-                            // 创建的表名
+                            // 这里解析的是output的表名
                             String tableName = ((SqlCreateTable) sqlNode).getTableName().toString();
                             // 当前表的字段列表
                             // SqlNode -> SqlTableColumn -> (SqlRegularColumn,SqlComputedColumn)
@@ -227,6 +230,22 @@ public class FlinkLineageAnalysisUtils {
                                 return columnMap;
                             }).collect(Collectors.toList());
 
+
+                            // todo 根据是普通的CreateTable或者SqlCreateHiveTable
+                            if (sqlNode instanceof SqlCreateHiveTable){
+                                //((SqlCreateHiveTable)sqlNode)
+
+
+                            }else{
+
+
+                            }
+
+
+
+
+
+
                             // 当前表创建来源信息,propertyList,这里不解析,要求此类表在元数据功能模块下创建
                             // 分区键 partitionKey
                             LineageVO lineageVO = new LineageVO(tableName,columnInfo);
@@ -235,15 +254,15 @@ public class FlinkLineageAnalysisUtils {
                         } else if (sqlNode instanceof SqlCreateView) {
 
                             String viewName = ((SqlCreateView) sqlNode).getViewName().toString();
-//                            List<Map<String,String>> columnInfo = ((SqlCreateView) sqlNode).getFieldList().getList().stream().map(s -> {
-//
-//                                Map<String,String> columnMap = new HashMap<>();
-//
-//                                if ()
-//
-//
-//
-//                            });
+                           /* List<Map<String,String>> columnInfo = ((SqlCreateView) sqlNode).getFieldList().getList().stream().map(s -> {
+
+                                Map<String,String> columnMap = new HashMap<>();
+
+                                // if ()
+
+
+
+                            });*/
 
 
                         }
