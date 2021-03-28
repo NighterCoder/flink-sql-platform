@@ -161,7 +161,7 @@ public class FlinkJobService {
             }
         });
 
-        //todo 流处理 分析血缘关系
+        //todo 流处理在提交执行的时候分析血缘关系,而定时批处理则在创建任务的时候分析血缘关系
         FlinkLineageAnalysisUtils.streamJarLineageAnalysis((StreamGraph) pipeline);
 
 

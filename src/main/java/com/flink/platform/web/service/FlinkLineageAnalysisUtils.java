@@ -176,12 +176,18 @@ public class FlinkLineageAnalysisUtils {
      * todo 5.CreateView 对应 SqlCreateView // CreateViewAsSelect
      * todo 6.AlterView 对应 SqlAlterView
      *
+     *
+     * Flink SQL目前可以通过 SET table.sql-dialect=default/hive 来动态切换语义;
+     *
+     *
      * @param statement SQL语句
      */
     public static void sqlLineageAnalysis(String statement) {
 
         if (statement != null && !statement.isEmpty()) {
             try {
+
+
                 SqlParser parser = SqlParser.create(statement, SqlParser.configBuilder()
                         // 使用FlinkSqlParse工厂
                         .setParserFactory(FlinkSqlParserImpl.FACTORY)
@@ -191,6 +197,9 @@ public class FlinkLineageAnalysisUtils {
                         .setConformance(FlinkSqlConformance.DEFAULT)
                         .build()
                 );
+
+
+
                 List<SqlNode> sqlNodeList = parser.parseStmtList().getList();
 
                 List<LineageVO> input = new ArrayList<>();

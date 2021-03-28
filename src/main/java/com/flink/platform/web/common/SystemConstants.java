@@ -25,5 +25,14 @@ public interface SystemConstants {
     String SINK_TABLE="sink.table";
 
 
+    /**
+     * 调度任务可视化时间维度
+     */
+    int TIMER_CYCLE_MINUTE = 1; // 分钟维度执行,比如间隔几分钟执行,选择该维度需要有间隔时间
+    int TIMER_CYCLE_HOUR = 2;   // 小时维度执行,需要选择在每小时的第几分钟执行
+    int TIMER_CYCLE_DAY = 3;    // 天维度执行,在每天的第几小时第几分钟执行
+    int TIMER_CYCLE_WEEK = 4;   // 周维度执行,
+
+
 
 }

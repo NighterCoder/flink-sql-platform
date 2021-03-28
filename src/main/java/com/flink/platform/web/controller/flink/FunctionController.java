@@ -1,7 +1,8 @@
 package com.flink.platform.web.controller.flink;
 
 
-import com.flink.platform.web.common.Result;
+import com.flink.platform.web.common.entity.Msg;
+import com.flink.platform.web.controller.BaseController;
 import com.flink.platform.web.service.FunctionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/function")
 @Slf4j
-public class FunctionController {
+public class FunctionController extends BaseController {
 
 
 
@@ -52,16 +53,16 @@ public class FunctionController {
      * @return void
      */
     @PutMapping
-    public Result put(@RequestParam("functionName") String functionName,
-                      @RequestParam("className") String className,
-                      @RequestParam("files") MultipartFile[] files) {
+    public Msg put(@RequestParam("functionName") String functionName,
+                   @RequestParam("className") String className,
+                   @RequestParam("files") MultipartFile[] files) {
         try{
             functionService.save(functionName,className,files);
         }catch (Exception e){
             log.error("upload error!", e);
             throw new RuntimeException("上传出错");
         }
-        return Result.success();
+        return success();
     }
 
 
