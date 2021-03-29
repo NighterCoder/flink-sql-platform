@@ -65,8 +65,9 @@ public abstract class FlinkShims {
 //      throw new Exception("Flink version: '" + flinkVersion + "' is not supported yet");
 //    }
 
-    if (flinkVersion.getMajorVersion() == 1 && flinkVersion.getMajorVersion() == 12){
+    if (flinkVersion.getMajorVersion() == 1 && flinkVersion.getMinorVersion() == 12){
       flinkShimsClass = Class.forName("com.flink.platform.core.operation.version.Flink112Shims");
+      //return new Flink112Shims(properties);
     }else{
       throw new Exception("Flink version: '" + flinkVersion + "' is not supported yet");
     }

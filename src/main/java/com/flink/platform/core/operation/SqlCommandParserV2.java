@@ -47,45 +47,89 @@ public class SqlCommandParserV2 {
 
 
     public enum SqlCommand {
-        SELECT,
+        SELECT(
+                "(WITH.*SELECT.*|SELECT.*)",
+                SINGLE_OPERAND),
+
+//        INSERT_INTO(
+//                "(INSERT\\s+INTO.*)",
+//                SINGLE_OPERAND),
+//
+//        INSERT_OVERWRITE(
+//                "(INSERT\\s+OVERWRITE.*)",
+//                SINGLE_OPERAND),
 
         INSERT_INTO,
 
         INSERT_OVERWRITE,
 
-        CREATE_TABLE,
+        CREATE_TABLE("(CREATE\\s+TABLE\\s+.*)", SINGLE_OPERAND),
 
-        ALTER_TABLE,
+        ALTER_TABLE(
+                "(ALTER\\s+TABLE\\s+.*)",
+                SINGLE_OPERAND),
 
-        DROP_TABLE,
+        DROP_TABLE("(DROP\\s+TABLE\\s+.*)", SINGLE_OPERAND),
 
-        CREATE_VIEW,
+        CREATE_VIEW(
+                "CREATE\\s+VIEW\\s+(\\S+)\\s+AS\\s+(.*)",
+                (operands) -> {
+                    if (operands.length < 2) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(new String[]{operands[0], operands[1]});
+                }),
 
-        DROP_VIEW,
+        DROP_VIEW(
+                "DROP\\s+VIEW\\s+(.*)",
+                SINGLE_OPERAND),
 
-        CREATE_DATABASE,
+        CREATE_DATABASE(
+                "(CREATE\\s+DATABASE\\s+.*)",
+                SINGLE_OPERAND),
 
-        ALTER_DATABASE,
+        ALTER_DATABASE(
+                "(ALTER\\s+DATABASE\\s+.*)",
+                SINGLE_OPERAND),
 
-        DROP_DATABASE,
+        DROP_DATABASE(
+                "(DROP\\s+DATABASE\\s+.*)",
+                SINGLE_OPERAND),
 
-        USE_CATALOG,
+        USE_CATALOG(
+                "USE\\s+CATALOG\\s+(.*)",
+                SINGLE_OPERAND),
 
-        USE,
+        USE(
+                "USE\\s+(?!CATALOG)(.*)",
+                SINGLE_OPERAND),
 
-        SHOW_CATALOGS,
+        EXPLAIN(
+                "EXPLAIN\\s+(.*)",
+                SINGLE_OPERAND),
 
-        SHOW_DATABASES,
 
-        SHOW_TABLES,
+        SHOW_CATALOGS(
+                "SHOW\\s+CATALOGS",
+                NO_OPERANDS),
 
-        SHOW_FUNCTIONS,
+        SHOW_DATABASES(
+                "SHOW\\s+DATABASES",
+                NO_OPERANDS),
 
-        EXPLAIN,
+        SHOW_TABLES(
+                "SHOW\\s+TABLES",
+                NO_OPERANDS),
 
-        DESCRIBE_TABLE,
+        SHOW_FUNCTIONS(
+                "SHOW\\s+FUNCTIONS",
+                NO_OPERANDS),
 
-        RESET,
+        //DESCRIBE_TABLE,
+
+        RESET(
+                "RESET",
+                NO_OPERANDS),
 
         // the following commands are not supported by SQL parser but are needed by users
 
@@ -131,15 +175,15 @@ public class SqlCommandParserV2 {
                 NO_OPERANDS),
 
 
-        CREATE_CATALOG(null, SINGLE_OPERAND),
+        CREATE_CATALOG,
 
-        DROP_CATALOG(null, SINGLE_OPERAND),
+        DROP_CATALOG,
 
-        CREATE_FUNCTION(null, SINGLE_OPERAND),
+        CREATE_FUNCTION,
 
-        DROP_FUNCTION(null, SINGLE_OPERAND),
+        DROP_FUNCTION,
 
-        ALTER_FUNCTION(null, SINGLE_OPERAND),
+        ALTER_FUNCTION,
 
         DESCRIBE(
                 "DESCRIBE\\s+(.*)",
@@ -263,6 +307,7 @@ public class SqlCommandParserV2 {
         public final Function<String[], Optional<String[]>> operandConverter;
 
         SqlCommand(String matchingRegex, Function<String[], Optional<String[]>> operandConverter) {
+
             this.pattern = Pattern.compile(matchingRegex, DEFAULT_PATTERN_FLAGS);
             this.operandConverter = operandConverter;
         }

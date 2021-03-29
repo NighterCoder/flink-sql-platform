@@ -7,6 +7,7 @@ import com.flink.platform.core.context.ExecutionContext;
 import com.flink.platform.core.context.SessionContext;
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.operation.SqlCommandParser;
+import com.flink.platform.core.operation.SqlCommandParserV2;
 import com.flink.platform.core.rest.result.ResultSet;
 import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.core.rest.session.SessionID;
@@ -92,7 +93,7 @@ public class FlinkSessionManager implements SessionManager {
         // todo 加上超时时间
         if (this.sessions.containsKey(sessionId)) {
             Session session = this.sessions.get(sessionId);
-            Tuple2<ResultSet, SqlCommandParser.SqlCommand> result = session.runStatement(statement);
+            Tuple2<ResultSet, SqlCommandParserV2.SqlCommand> result = session.runStatement(statement);
             ResultSet resultSet = result.f0;
             // SQL类型,SELECT or INSET ...
             String statementType = result.f1.name();

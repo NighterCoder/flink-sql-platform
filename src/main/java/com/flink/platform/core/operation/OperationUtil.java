@@ -36,6 +36,12 @@ import java.util.List;
  */
 public class OperationUtil {
 
+    public static final ResultSet OK = ResultSet.builder()
+            .resultKind(ResultKind.SUCCESS)
+            .columns(ColumnInfo.create(ConstantNames.RESULT, new VarCharType(2)))
+            .data(Row.of(ConstantNames.OK))
+            .build();
+
     public static final ResultSet AFFECTED_ROW_COUNT0 =
             ResultSet.builder()
                     .resultKind(ResultKind.SUCCESS_WITH_CONTENT)

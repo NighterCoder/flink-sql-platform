@@ -105,6 +105,7 @@ public class DataAnalysisService {
         // 工厂模式创建SessionManager
         SessionManager sessionManager = sessionManagerFactory.create(dto.getSessionType());
         // 格式化SQL 1.去除注释 2.去除空格
+        // todo 这里有bug
         sql = SQLUtils.commentsFormat(sql);
         // todo 目前没有支持变量替换
         sql = SQLUtils.generateSQL(sql, Collections.emptyMap());

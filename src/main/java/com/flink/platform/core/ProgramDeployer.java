@@ -1,6 +1,9 @@
 package com.flink.platform.core;
 
 import com.flink.platform.core.context.ExecutionContext;
+import com.flink.platform.core.executor.PlatformYarnJobClusterExecutor;
+import com.flink.platform.core.executor.PlatformYarnSessionClusterExecutor;
+import com.flink.platform.web.common.SystemConstants;
 import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.DeploymentOptions;
@@ -50,13 +53,20 @@ public class ProgramDeployer {
             throw new RuntimeException("No execution.target specified in your configuration file.");
         }
 
-        //todo
+        // todo 待完善
         PipelineExecutor executor;
         if (this.executionContext.getEnvironment().getExecution().inYarnPerJob()){
             LOG.info("in deployer, target = yarn-per-job");
+            executor = new PlatformYarnJobClusterExecutor(executionContext, SystemConstants.FLINK_LIB_DIR);
+        }else{
+            LOG.info("in deployer, target = yarn-session");
+            executor = new PlatformYarnSessionClusterExecutor(executionContext);
         }
-
-        return null;
+        try {
+            return executor.execute(pipeline, configuration,executionContext.getClassLoader());
+        } catch (Exception e) {
+            throw new RuntimeException("Could not execute program.", e);
+        }
     }
 
 

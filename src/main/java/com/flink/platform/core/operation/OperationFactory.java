@@ -26,6 +26,22 @@ public class OperationFactory {
             case SHOW_DATABASES:
                 operation = new ShowDatabaseOperation(context);
                 break;
+            case CREATE_TABLE:
+            case DROP_TABLE:
+            case ALTER_TABLE:
+            case CREATE_DATABASE:
+            case DROP_DATABASE:
+            case ALTER_DATABASE:
+                operation = new DDLOperation(context, call.operands[0], call.command);
+                break;
+            case SHOW_TABLES:
+                operation = new ShowTablesOperation(context);
+                break;
+
+            case INSERT_INTO:
+            case INSERT_OVERWRITE:
+                operation = new InsertOperation(context, call.operands[0], call.operands[1]);
+                break;
             default:
                 throw new RuntimeException("Unsupported command call " + call + ". This is a bug.");
         }
