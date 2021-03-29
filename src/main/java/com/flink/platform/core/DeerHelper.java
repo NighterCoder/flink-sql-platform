@@ -2,7 +2,9 @@ package com.flink.platform.core;
 
 import com.flink.platform.core.config.UDFRegister;
 import com.flink.platform.core.config.entries.DeerEntry;
+import com.flink.platform.core.config.entries.ExecutionEntry;
 import com.flink.platform.core.exception.SqlPlatformException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -15,11 +17,13 @@ import java.util.List;
 /**
  * Created by 凌战 on 2021/3/3
  */
+@Slf4j
 public class DeerHelper {
 
     private static final String UDF_SQL_PATH = "query_udf.sql";
 
     private DeerEntry deerEntry;
+
 
     public DeerHelper(DeerEntry entry) {
         this.deerEntry = entry;

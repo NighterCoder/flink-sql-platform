@@ -66,9 +66,10 @@ public class DeerEntry extends ConfigEntry {
      * Merges two session entries. The properties of the first execution entry might be
      * overwritten by the second one.
      */
-    public static DeerEntry merge(DeerEntry gateway1, DeerEntry gateway2) {
-        final Map<String, String> mergedProperties = new HashMap<>(gateway1.asTopLevelMap());
-        mergedProperties.putAll(gateway2.asTopLevelMap());
+    public static DeerEntry merge(DeerEntry deerEntry1, DeerEntry deerEntry2) {
+        // asPrefixedMap 会加前缀
+        final Map<String, String> mergedProperties = new HashMap<>(deerEntry1.asMap());
+        mergedProperties.putAll(deerEntry1.asMap());
 
         final DescriptorProperties properties = new DescriptorProperties(true);
         properties.putProperties(mergedProperties);
@@ -88,6 +89,24 @@ public class DeerEntry extends ConfigEntry {
     public String getDeerPassword() {
         return properties.getOptionalString(DEER_PASSWORD).orElse("");
     }
+
+    public static DeerEntry enrich(DeerEntry execution, Map<String, String> prefixedProperties){
+        final Map<String, String> enrichedProperties = new HashMap<>(execution.asMap());
+
+        prefixedProperties.forEach((k, v) -> {
+            final String normalizedKey = k.toLowerCase();
+            if (k.startsWith(DEER_ENTRY + '.')) {
+                enrichedProperties.put(normalizedKey.substring(DEER_ENTRY.length() + 1), v);
+            }
+        });
+
+        final DescriptorProperties properties = new DescriptorProperties(true);
+        properties.putProperties(enrichedProperties);
+
+        return new DeerEntry(properties);
+    }
+
+
 
 
 }

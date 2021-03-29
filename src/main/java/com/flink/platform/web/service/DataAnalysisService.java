@@ -51,8 +51,9 @@ public class DataAnalysisService {
      */
     public SessionVO getSession(SessionType st, ExecuteType et) {
 
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username = loginUser.getUsername();
+//        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//        String username = loginUser.getUsername();
+        String username = "admin";
 
         // 工厂模式创建SessionManager
         // 1.根据SessionType判断是FlinkSessionManager或者SparkSessionManager

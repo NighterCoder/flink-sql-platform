@@ -71,3 +71,11 @@ CREATE TABLE IF NOT EXISTS `auth_user_role`  (
 
 
 -- 用户认证权限相关 end
+
+CREATE TABLE IF NOT EXISTS `udf_flink_register`  (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `function_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `class_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `jar_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;

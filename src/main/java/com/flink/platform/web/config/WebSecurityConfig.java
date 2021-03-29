@@ -47,7 +47,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     // 定义需要校验权限的路径
     // 其他的路径只要认证通过即可
-    private final String[] authPath = new String[]{"/auth/**", "/admin/**", "/api/**"};
+    // private final String[] authPath = new String[]{"/auth/**", "/admin/**", "/api/**"};
+    private final String[] authPath = new String[]{"/auth/**", "/admin/**"};
 
     private AntPathMatcher antPathMatcher = new AntPathMatcher();
 
@@ -100,7 +101,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 "/libs/**",
                 "/css/**",
                 "/js/**",
-                "/img/**"
+                "/img/**",
+                 "/api/**"   // 放开/api路径访问权限
+
         );
     }
 

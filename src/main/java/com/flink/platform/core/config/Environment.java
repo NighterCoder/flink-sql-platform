@@ -331,7 +331,7 @@ public class Environment {
         // does not change server properties
         enrichedEnv.server = env.getServer();
 
-        enrichedEnv.deer = env.getDeer();
+        enrichedEnv.deer = DeerEntry.enrich(env.deer,properties);
 
         return enrichedEnv;
     }
