@@ -7,7 +7,7 @@ import com.flink.platform.core.context.SessionContext;
  */
 public class OperationFactory {
 
-    public static Operation createOperation(SqlCommandParser.SqlCommandCall call, SessionContext context) {
+    public static Operation createOperation(SqlCommandParserV2.SqlCommandCall call, SessionContext context) {
         Operation operation;
 
         switch (call.command){

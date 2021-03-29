@@ -26,6 +26,7 @@
         <scala.binary.version>2.11</scala.binary.version>
         <spring.boot.version>2.2.8.RELEASE</spring.boot.version>
         <hive-version>3.1.2</hive-version>
+        <jline.version>3.9.0</jline.version>
     </properties>
 
     <dependencies>
@@ -344,6 +345,18 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>${hive-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-terminal</artifactId>
+            <version>${jline.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-reader</artifactId>
+            <version>${jline.version}</version>
         </dependency>
 
 

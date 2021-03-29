@@ -1,29 +1,38 @@
 package com.flink.platform.core.rest.session;
 
 import com.flink.platform.core.config.entries.ExecutionEntry;
+import com.flink.platform.core.context.ExecutionContext;
 import com.flink.platform.core.context.SessionContext;
 import com.flink.platform.core.exception.SqlParseException;
 import com.flink.platform.core.exception.SqlPlatformException;
-import com.flink.platform.core.operation.JobOperation;
-import com.flink.platform.core.operation.Operation;
-import com.flink.platform.core.operation.OperationFactory;
-import com.flink.platform.core.operation.SqlCommandParser;
+import com.flink.platform.core.operation.*;
+import com.flink.platform.core.operation.version.FlinkShims;
+import com.flink.platform.core.operation.version.FlinkVersion;
 import com.flink.platform.core.rest.result.ResultSet;
 import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.runtime.util.EnvironmentInformation;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.internal.TableEnvironmentInternal;
+import org.apache.flink.table.delegation.Parser;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Similar to HTTP Session, which could maintain user identity and store user-specific data
  * during multiple request/response interactions between a client and the gateway server.
+ *
+ * todo 改造,支持不同的Parser来对应不同的语义解析
+ *
+ *
  */
 public class Session {
 
@@ -57,19 +66,35 @@ public class Session {
         return context;
     }
 
-    public Tuple2<ResultSet, SqlCommandParser.SqlCommand> runStatement(String statement){
+    public Tuple2<ResultSet, SqlCommandParserV2.SqlCommand> runStatement(String statement){
         // TODO: This is a temporary fix to avoid NPE.
         //  In SQL gateway, TableEnvironment is created and used by different threads, thus causing this problem.
         RelMetadataQuery.THREAD_PROVIDERS
                 .set(JaninoRelMetadataProvider.of(FlinkDefaultRelMetadataProvider.INSTANCE()));
 
         LOG.info("Session: {}, run statement: {}", sessionId, statement);
+
+        // 不需要Planner
         boolean isBlinkPlanner = context.getExecutionContext().getEnvironment().getExecution().getPlanner()
                 .equalsIgnoreCase(ExecutionEntry.EXECUTION_PLANNER_VALUE_BLINK);
 
-        SqlCommandParser.SqlCommandCall call;
+        SqlCommandParserV2.SqlCommandCall call;
         try{
-            Optional<SqlCommandParser.SqlCommandCall> callOpt=SqlCommandParser.parse(statement,isBlinkPlanner);
+
+            // todo 代码改造,适应新版本的SqlCommandParser,FlinkShims当前只是适配1.12版本,后续需要加版本号判断
+            FlinkVersion flinkVersion =  new FlinkVersion(EnvironmentInformation.getVersion());
+            FlinkShims flinkShims = FlinkShims.getInstance(flinkVersion, new Properties());
+
+            // 获取TableEnvironment
+            ExecutionContext executionContext = this.context.getExecutionContext();
+            SqlCommandParserV2 sqlCommandParser = new SqlCommandParserV2(flinkShims,executionContext.getTableEnvironment());
+
+            // 旧代码  @Deprecated
+            // Optional<SqlCommandParser.SqlCommandCall> callOpt=SqlCommandParser.parse(statement,isBlinkPlanner);
+
+            Optional<SqlCommandParserV2.SqlCommandCall> callOpt = sqlCommandParser.parse(statement);
+
+
             if (!callOpt.isPresent()){
                 LOG.error("Session: {}, Unknown statement: {}", sessionId, statement);
                 throw new SqlPlatformException("Unknown statement: " + statement);
@@ -84,6 +109,8 @@ public class Session {
             }
         }catch (SqlParseException e) {
             LOG.error("Session: {}, Failed to parse statement: {}", sessionId, statement);
+            throw new SqlPlatformException(e.getMessage(), e.getCause());
+        } catch (Exception e) {
             throw new SqlPlatformException(e.getMessage(), e.getCause());
         }
 
