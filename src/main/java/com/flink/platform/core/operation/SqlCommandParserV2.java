@@ -51,17 +51,17 @@ public class SqlCommandParserV2 {
                 "(WITH.*SELECT.*|SELECT.*)",
                 SINGLE_OPERAND),
 
-//        INSERT_INTO(
-//                "(INSERT\\s+INTO.*)",
-//                SINGLE_OPERAND),
+        INSERT_INTO(
+                "(INSERT\\s+INTO.*)",
+                SINGLE_OPERAND),
+
+        INSERT_OVERWRITE(
+                "(INSERT\\s+OVERWRITE.*)",
+                SINGLE_OPERAND),
+
+//        INSERT_INTO,
 //
-//        INSERT_OVERWRITE(
-//                "(INSERT\\s+OVERWRITE.*)",
-//                SINGLE_OPERAND),
-
-        INSERT_INTO,
-
-        INSERT_OVERWRITE,
+//        INSERT_OVERWRITE,
 
         CREATE_TABLE("(CREATE\\s+TABLE\\s+.*)", SINGLE_OPERAND),
 
@@ -159,9 +159,9 @@ public class SqlCommandParserV2 {
                 NO_OPERANDS),
 
         // FLINK-17111
-        SHOW_VIEWS(
-                "SHOW\\s+VIEWS",
-                NO_OPERANDS),
+//        SHOW_VIEWS(
+//                "SHOW\\s+VIEWS",
+//                NO_OPERANDS),
 
         // the following commands are not supported by SQL parser but are needed by JDBC driver
         // these should not be exposed to the user and should be used internally

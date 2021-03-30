@@ -61,8 +61,6 @@ import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.util.*;
@@ -272,6 +270,9 @@ public class Flink112Shims extends FlinkShims {
     if (operation instanceof CatalogSinkModifyOperation) {
       boolean overwrite = ((CatalogSinkModifyOperation) operation).isOverwrite();
       cmd = overwrite ? SqlCommand.INSERT_OVERWRITE : SqlCommand.INSERT_INTO;
+      // 需要DML语句和具体表名两个参数
+      String tableIdentifier = ((CatalogSinkModifyOperation) operation).getTableIdentifier().getObjectName();
+      operands = new String[]{stmt,tableIdentifier};
     } else if (operation instanceof CreateTableOperation) {
       cmd = SqlCommand.CREATE_TABLE;
     } else if (operation instanceof DropTableOperation) {

@@ -42,6 +42,40 @@ public class OperationFactory {
             case INSERT_OVERWRITE:
                 operation = new InsertOperation(context, call.operands[0], call.operands[1]);
                 break;
+            case CREATE_VIEW:
+                operation = new CreateViewOperation(context,call.operands[0],call.operands[1]);
+                break;
+            case DROP_VIEW:
+                operation = new DropViewOperation(context,call.operands[0]);
+                break;
+            case USE_CATALOG:
+                operation = new UseCatalogOperation(context,call.operands[0]);
+                break;
+            case USE:
+                operation = new UseDatabaseOperation(context, call.operands[0]);
+                break;
+            case EXPLAIN:
+                operation = new ExplainOperation(context,call.operands[0]);
+                break;
+            case SHOW_CATALOGS:
+                operation = new ShowCatalogOperation(context);
+                break;
+            case SHOW_FUNCTIONS:
+                operation = new ShowFunctionOperation(context);
+                break;
+            case RESET:
+                operation = new ResetOperation(context);
+                break;
+            case SHOW_MODULES:
+                operation = new ShowModuleOperation(context);
+                break;
+            case SHOW_CURRENT_CATALOG:
+                operation = new ShowCurrentCatalogOperation(context);
+                break;
+            case SHOW_CURRENT_DATABASE:
+                operation = new ShowCurrentDatabaseOperation(context);
+                break;
+
             default:
                 throw new RuntimeException("Unsupported command call " + call + ". This is a bug.");
         }

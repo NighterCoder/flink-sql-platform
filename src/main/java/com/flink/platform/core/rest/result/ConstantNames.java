@@ -43,7 +43,7 @@ public class ConstantNames {
 
 	public static final String SHOW_FUNCTIONS_RESULT = "functions";
 
-	public static final String EXPLAIN_RESULT = "explanation";
+	public static final String SHOW_EXPLANATION_RESULT = "explanation";
 
 	public static final String DESCRIBE_NAME = "name";
 	public static final String DESCRIBE_TYPE = "type";
@@ -58,4 +58,7 @@ public class ConstantNames {
 
 	public static final String SET_KEY = "key";
 	public static final String SET_VALUE = "value";
+
+
+
 }
