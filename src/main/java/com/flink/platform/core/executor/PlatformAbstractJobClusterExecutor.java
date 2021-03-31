@@ -25,6 +25,8 @@ import org.springframework.util.ResourceUtils;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -56,10 +58,13 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
         org.apache.hadoop.fs.Path flinkDist = null;
         File file = new File(this.flinkLibDir);
 
+        List<File> shipFiles = new ArrayList<>();
         for (File ele : Objects.requireNonNull(file.listFiles())) {
             URL url = ele.toURI().toURL();
             if (url.toString().contains("flink-dist")) {
                 flinkDist = new org.apache.hadoop.fs.Path(url.toString());
+            }else{
+                shipFiles.add(ele);
             }
         }
 
@@ -68,6 +73,7 @@ public class PlatformAbstractJobClusterExecutor<ClusterID, ClientFactory extends
             // 可以在这里设置flink-dist*.jar, configuration.set(YarnConfigOptions.FLINK_DIST_JAR,"");
             // 后面不需要 setLocalJarPath
             ((YarnClusterDescriptor) clusterDescriptor).setLocalJarPath(Objects.requireNonNull(flinkDist));
+            ((YarnClusterDescriptor) clusterDescriptor).addShipFiles(shipFiles);
 
             final ExecutionConfigAccessor configAccessor = ExecutionConfigAccessor.fromConfiguration(configuration);
             final ClusterSpecification clusterSpecification = clusterClientFactory.getClusterSpecification(configuration);

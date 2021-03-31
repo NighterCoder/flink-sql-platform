@@ -51,17 +51,17 @@ public class SqlCommandParserV2 {
                 "(WITH.*SELECT.*|SELECT.*)",
                 SINGLE_OPERAND),
 
-        INSERT_INTO(
-                "(INSERT\\s+INTO.*)",
-                SINGLE_OPERAND),
-
-        INSERT_OVERWRITE(
-                "(INSERT\\s+OVERWRITE.*)",
-                SINGLE_OPERAND),
-
-//        INSERT_INTO,
+//        INSERT_INTO(
+//                "(INSERT\\s+INTO.*)",
+//                SINGLE_OPERAND),
 //
-//        INSERT_OVERWRITE,
+//        INSERT_OVERWRITE(
+//                "(INSERT\\s+OVERWRITE.*)",
+//                SINGLE_OPERAND),
+
+        INSERT_INTO,
+
+        INSERT_OVERWRITE,
 
         CREATE_TABLE("(CREATE\\s+TABLE\\s+.*)", SINGLE_OPERAND),
 

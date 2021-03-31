@@ -43,6 +43,7 @@ import org.apache.flink.table.factories.*;
 import org.apache.flink.table.functions.*;
 import org.apache.flink.table.module.Module;
 import org.apache.flink.table.module.ModuleManager;
+import org.apache.flink.table.planner.delegation.ExecutorBase;
 import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.util.FlinkException;
@@ -703,23 +704,18 @@ public class ExecutionContext<ClusterID> {
 
     /**
      * 创建StreamGraph或者plan
-     *
-     * @param jobName
      * @return
      */
-    public Pipeline createPipeline(String jobName) {
-        if (streamExecEnv != null) {
-            // special case for Blink planner to apply batch optimizations
-            // note: it also modifies the ExecutionConfig!
-            // todo
-//            if (executor instanceof ExecutorBase) {
-//                return ((ExecutorBase) executor).getStreamGraph(jobName);
-//            }
-            return streamExecEnv.getStreamGraph(jobName);
-        } else {
-            return execEnv.createProgramPlan(jobName);
-        }
-
+    public Pipeline createPipeline(String name) {
+        return wrapClassLoader(() -> {
+            if (streamExecEnv != null) {
+                StreamTableEnvironmentImpl streamTableEnv = (StreamTableEnvironmentImpl) tableEnv;
+                return streamTableEnv.getPipeline(name);
+            } else {
+                BatchTableEnvironmentImpl batchTableEnv = (BatchTableEnvironmentImpl) tableEnv;
+                return batchTableEnv.getPipeline(name);
+            }
+        });
     }
 
 

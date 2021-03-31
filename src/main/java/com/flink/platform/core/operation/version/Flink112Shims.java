@@ -247,6 +247,7 @@ public class Flink112Shims extends FlinkShims {
         sqlCommandCall = parseBySqlParser(sqlParser, stmt);
       }
     } catch (Exception e) {
+      LOGGER.error(e.getMessage());
       return Optional.empty();
     }
     return Optional.of(sqlCommandCall);
