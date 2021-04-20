@@ -44,6 +44,7 @@ flink:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true  #默认为true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 输出日志
   global-config:
     db-config:
       id-type: auto # ID自增

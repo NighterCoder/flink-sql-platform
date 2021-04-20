@@ -79,3 +79,27 @@ CREATE TABLE IF NOT EXISTS `udf_flink_register`  (
   `jar_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+
+
+-- cluster
+CREATE TABLE IF NOT EXISTS `cluster` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `yarn_url` varchar(255) NOT NULL,
+  `default_file_cluster` bit(1) NOT NULL,
+  `flink_proxy_user_enabled` bit(1) NOT NULL,
+  `fs_default_fs` varchar(255) NOT NULL,
+  `fs_webhdfs` varchar(255) DEFAULT NULL,
+  `fs_user` varchar(255) NOT NULL,
+  `fs_dir` varchar(255) NOT NULL,
+  `stream_black_node_list` varchar(255) DEFAULT NULL,
+  `batch_black_node_list` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `name_unique` (`name`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+
+
+
+
+
