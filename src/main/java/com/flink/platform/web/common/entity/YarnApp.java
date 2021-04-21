@@ -1,5 +1,7 @@
 package com.flink.platform.web.common.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +20,12 @@ import java.util.Date;
 @TableName("yarn_app")
 public class YarnApp {
 
+
+    /**
+     * id的几种策略: 1.uuid 2.自增id 3.雪花算法 4.redis 5.zookeeper 等
+     */
+
+    @TableId(type = IdType.AUTO) // 需要数据库中设置主键自增
     private Integer id;
     /**
      * 集群id
@@ -60,7 +68,7 @@ public class YarnApp {
      */
     private String applicationType;
     private Date startedTime;
-    private Integer allocateMB;
+    private Integer allocatedMB;
     private Date refreshTime;
 
 }

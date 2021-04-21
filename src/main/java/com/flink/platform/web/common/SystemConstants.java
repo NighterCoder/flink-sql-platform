@@ -44,7 +44,31 @@ public interface SystemConstants {
         String SCRIPT_HISTORY="scriptHistory";
     }
 
+    /**
+     * 执行状态
+     */
+    interface JobState{
+        String INITED = "INITED";
+        String SUBMITTING = "SUBMITTING";
+        String SUBMITTED = "SUBMITTED";
+        String ACCEPTED = "ACCEPTED";
+        String RUNNING = "RUNNING";
+        String SUCCEEDED = "SUCCEEDED";
+        String KILLED = "KILLED";
+        String FAILED = "FAILED";
+        String TIMEOUT = "TIMEOUT";
+        String SUBMITTING_TIMEOUT = "SUBMITTING_TIMEOUT";
+        String SUBMITTING_FAILED = "SUBMITTING_FAILED";
+        /**
+         * 调度扩展执行状态
+         */
+        String UN_CONFIRMED_ = "UN_CONFIRMED";
+        String WAITING_PARENT_ = "WAITING_PARENT";
+        String PARENT_FAILED_ = "PARENT_FAILED";
 
+
+
+    }
 
 
 }
