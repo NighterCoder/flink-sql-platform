@@ -1,6 +1,5 @@
 package com.flink.platform.web.job.system;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.flink.platform.web.common.entity.Cluster;
 import com.flink.platform.web.common.entity.HttpYarnApp;
