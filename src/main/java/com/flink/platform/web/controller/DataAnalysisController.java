@@ -6,9 +6,8 @@ import com.flink.platform.web.common.entity.SessionVO;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.enums.ExecuteType;
 import com.flink.platform.web.common.enums.SessionType;
-import com.flink.platform.web.service.DataAnalysisService;
+import com.flink.platform.web.service.impl.DataAnalysisService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hadoop.mapreduce.Job;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

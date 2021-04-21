@@ -27,6 +27,7 @@
         <spring.boot.version>2.2.8.RELEASE</spring.boot.version>
         <hive-version>3.1.2</hive-version>
         <jline.version>3.9.0</jline.version>
+        <okhttp.version>3.6.0</okhttp.version>
     </properties>
 
     <dependencies>
@@ -362,6 +363,16 @@
             <artifactId>jline-reader</artifactId>
             <version>${jline.version}</version>
         </dependency>
+
+
+        <!--HTTP工具类-->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${okhttp.version}</version>
+        </dependency>
+
+
 
 
 

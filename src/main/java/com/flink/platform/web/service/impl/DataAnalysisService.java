@@ -1,23 +1,19 @@
-package com.flink.platform.web.service;
+package com.flink.platform.web.service.impl;
 
 import com.flink.platform.web.common.entity.JobSubmitDTO;
 import com.flink.platform.web.common.entity.SessionVO;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.analysis.SessionDO;
-import com.flink.platform.web.common.entity.login.LoginUser;
 import com.flink.platform.web.common.enums.ExecuteType;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.SessionType;
 import com.flink.platform.web.common.util.SQLUtils;
-import com.flink.platform.web.config.FlinkConfProperties;
 import com.flink.platform.web.manager.SessionManager;
 import com.flink.platform.web.manager.SessionManagerFactory;
 import com.flink.platform.web.mapper.SessionMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.jdbc.SQL;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;

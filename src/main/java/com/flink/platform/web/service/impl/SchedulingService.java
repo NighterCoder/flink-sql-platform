@@ -1,4 +1,4 @@
-package com.flink.platform.web.service;
+package com.flink.platform.web.service.impl;
 
 import org.springframework.stereotype.Service;
 

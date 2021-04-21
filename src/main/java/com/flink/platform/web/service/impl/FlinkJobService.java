@@ -1,13 +1,11 @@
-package com.flink.platform.web.service;
+package com.flink.platform.web.service.impl;
 
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.executor.PlatformYarnJobClusterExecutor;
 import com.flink.platform.web.common.SystemConstants;
-import com.flink.platform.web.common.entity.FetchData;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.jar.JarJobConf;
 import com.flink.platform.web.common.enums.SessionState;
-import com.flink.platform.web.common.enums.StatementState;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.manager.FlinkSessionManager;
 import com.flink.platform.web.manager.HDFSManager;

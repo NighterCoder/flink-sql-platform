@@ -1,4 +1,4 @@
-package com.flink.platform.web.service;
+package com.flink.platform.web.service.impl;
 
 import com.flink.platform.web.common.entity.function.FunctionDO;
 import com.flink.platform.web.common.entity.login.LoginUser;

@@ -34,5 +34,17 @@ public interface SystemConstants {
     int TIMER_CYCLE_WEEK = 4;   // 周维度执行,
 
 
+    /**
+     * Job分组
+     */
+    interface JobGroup{
+        String COMMON = "common";
+        String MONITOR = "monitor";
+        String SCHEDULE = "schedule";
+        String SCRIPT_HISTORY="scriptHistory";
+    }
+
+
+
 
 }

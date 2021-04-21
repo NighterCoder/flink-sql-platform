@@ -1,4 +1,4 @@
-package com.flink.platform.web.service;
+package com.flink.platform.web.service.impl;
 
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.lineage.LineageVO;
@@ -6,7 +6,6 @@ import com.flink.platform.web.exception.FlinkSqlParseException;
 import com.flink.platform.web.exception.StreamNodeParseException;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.java.utils.ParameterTool;

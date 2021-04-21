@@ -3,7 +3,7 @@ package com.flink.platform.web.controller.flink;
 
 import com.flink.platform.web.common.entity.Msg;
 import com.flink.platform.web.controller.BaseController;
-import com.flink.platform.web.service.FunctionService;
+import com.flink.platform.web.service.impl.FunctionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PutMapping;

@@ -16,6 +16,25 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
+  quartz:
+    # 基于JDBC存储
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: DeerScheduler
+            instanceId: AUTO
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 100
+            threadPriority: 5
+          jobStore:
+            misfireThreshold: 120000
+
+
+
+
 hdfs:
   path: test
   upload: /tmp/deer/upload
@@ -54,12 +73,12 @@ mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
 
 ###日志
-logging:
-  level:
-    ### dao开启debug模式,输出查询sql
-    com:
-      flink:
-        platform:
-          web:
-            mapper: debug
+#logging:
+#  level:
+#    ### dao开启debug模式,输出查询sql
+#    com:
+#      flink:
+#        platform:
+#          web:
+#            mapper: debug
 
