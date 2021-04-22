@@ -1,7 +1,7 @@
 package com.flink.platform.web.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.flink.platform.web.common.entity.YarnApp;
+import com.flink.platform.web.common.entity.entity2table.YarnApp;
 import com.flink.platform.web.mapper.YarnAppMapper;
 import com.flink.platform.web.service.YarnAppService;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,7 @@
 package com.flink.platform.web.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.flink.platform.web.common.entity.Cluster;
+import com.flink.platform.web.common.entity.entity2table.Cluster;
 import org.springframework.stereotype.Repository;
 
 /**

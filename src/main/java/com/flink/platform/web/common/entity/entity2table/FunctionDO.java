@@ -1,4 +1,4 @@
-package com.flink.platform.web.common.entity.function;
+package com.flink.platform.web.common.entity.entity2table;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;

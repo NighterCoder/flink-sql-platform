@@ -1,7 +1,7 @@
 package com.flink.platform.web.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.flink.platform.web.common.entity.Cluster;
+import com.flink.platform.web.common.entity.entity2table.Cluster;
 import com.flink.platform.web.mapper.ClusterMapper;
 import com.flink.platform.web.service.ClusterService;
 import org.springframework.stereotype.Service;

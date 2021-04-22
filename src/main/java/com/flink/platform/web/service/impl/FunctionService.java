@@ -1,6 +1,6 @@
 package com.flink.platform.web.service.impl;
 
-import com.flink.platform.web.common.entity.function.FunctionDO;
+import com.flink.platform.web.common.entity.entity2table.FunctionDO;
 import com.flink.platform.web.common.entity.login.LoginUser;
 import com.flink.platform.web.manager.HDFSManager;
 import com.flink.platform.web.mapper.FunctionMapper;

@@ -2,10 +2,10 @@ package com.flink.platform.web.job.system;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.flink.platform.web.common.SystemConstants;
-import com.flink.platform.web.common.entity.Cluster;
-import com.flink.platform.web.common.entity.ClusterUser;
+import com.flink.platform.web.common.entity.entity2table.Cluster;
+import com.flink.platform.web.common.entity.entity2table.ClusterUser;
 import com.flink.platform.web.common.entity.HttpYarnApp;
-import com.flink.platform.web.common.entity.YarnApp;
+import com.flink.platform.web.common.entity.entity2table.YarnApp;
 import com.flink.platform.web.config.YarnConfig;
 import com.flink.platform.web.service.ClusterService;
 import com.flink.platform.web.service.ClusterUserService;
@@ -28,7 +28,7 @@ import java.util.List;
  * 3, 内存超限检测
  * ...
  * <p>
- * <p>
+ *
  * 保存在yarn_app表(仅保存当前活跃状态)中
  */
 public class ActiveYarnAppRefreshJob implements InterruptableJob {
@@ -165,10 +165,11 @@ public class ActiveYarnAppRefreshJob implements InterruptableJob {
              * 2.长时间未运行应用
              */
             if (checkAppDuplicateAndNoRunningSkipCount >= 30) {
-
+                checkAppNotRunning(cluster,yarnApps);
+                // todo
             }
             if (checkAppMemorySkipCount >= 180) {
-
+                checkAppMemory(cluster,yarnApps);
             }
         }
 

@@ -2,7 +2,7 @@ package com.flink.platform.web.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.flink.platform.web.common.entity.analysis.SessionDO;
+import com.flink.platform.web.common.entity.entity2table.SessionDO;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package com.flink.platform.web.common.entity.scheduling;
+package com.flink.platform.web.common.entity.entity2table;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.flink.platform.web.common.SystemConstants;

@@ -3,7 +3,7 @@ package com.flink.platform.web.service.impl;
 import com.flink.platform.web.common.entity.JobSubmitDTO;
 import com.flink.platform.web.common.entity.SessionVO;
 import com.flink.platform.web.common.entity.StatementResult;
-import com.flink.platform.web.common.entity.analysis.SessionDO;
+import com.flink.platform.web.common.entity.entity2table.SessionDO;
 import com.flink.platform.web.common.enums.ExecuteType;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.enums.SessionType;
