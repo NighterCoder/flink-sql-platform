@@ -17,6 +17,12 @@ public class SchedulingJobNode {
     private String description;
 
     /**
+     * 所属集群id
+     */
+    private Integer clusterId;
+
+
+    /**
      * 节点类型:Flink/Spark/Start Node/End Node
      * todo 创建对应枚举类
      */

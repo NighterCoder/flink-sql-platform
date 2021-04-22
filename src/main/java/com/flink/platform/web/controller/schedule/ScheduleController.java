@@ -1,4 +1,4 @@
-package com.flink.platform.web.controller.scheduling;
+package com.flink.platform.web.controller.schedule;
 
 import com.flink.platform.web.common.entity.Msg;
 import com.flink.platform.web.common.entity.login.LoginUser;
@@ -22,12 +22,12 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/schedule")
-public class SchedulingController extends BaseController {
+public class ScheduleController extends BaseController {
 
     /**
-     * 保存定时任务
+     * 保存或者更新定时调度任务
      *
-     * @param req 定时任务实体类
+     * @param req 定时调度任务实体类
      */
     @RequestMapping(value = "/save", method = RequestMethod.POST)
     public Msg save(@RequestBody SchedulingJobDto req) {
@@ -42,7 +42,7 @@ public class SchedulingController extends BaseController {
 
         // 遍历WorkFlow中的任务节点
         for (SchedulingJobNode node:req.getJobNodes()){
-            // 之前未创建过的节点,id为空
+            // 新创建的节点,id为空
             if(node.getId() == null){
                 node.setCreateBy(loginUser.getUsername());
                 node.setCreateTime(now);
@@ -52,6 +52,15 @@ public class SchedulingController extends BaseController {
         }
 
         // todo 增加资源校验等等
+        for (SchedulingJobNode node:req.getJobNodes()){
+
+        }
+
+
+
+
+
+
 
 
         return null;

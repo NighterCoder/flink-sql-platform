@@ -17,8 +17,8 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@TableName("node")
-public class ExecuteNode {
+@TableName("schedule_node")
+public class ScheduleNode {
 
     @TableId(type = IdType.AUTO)
     private Integer id;
@@ -42,7 +42,9 @@ public class ExecuteNode {
      * 列表查询字段???
      */
     private Boolean monitorEnabled;
-    private Integer agentId;
+
+    // 不需要代理示例,即ip:port
+    // private Integer agentId;
     private Integer clusterId;
     private Integer timeout;
     /**

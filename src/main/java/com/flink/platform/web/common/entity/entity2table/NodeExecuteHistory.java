@@ -68,7 +68,8 @@ public class NodeExecuteHistory {
      */
     private String nodeType;
 
-    private Integer agentId;
+    // 不需要代理示例,即ip:port
+    // private Integer agentId;
 
     private Integer clusterId;
 
