@@ -11,7 +11,4 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class YarnAppServiceImpl extends ServiceImpl<YarnAppMapper, YarnApp> implements YarnAppService {
-
-
-
 }

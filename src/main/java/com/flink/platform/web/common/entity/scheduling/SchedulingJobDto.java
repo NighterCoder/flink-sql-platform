@@ -25,9 +25,10 @@ public class SchedulingJobDto extends AbstractPageDto {
 
     private String id;
     /**
-     * 任务创建用户
+     * 名字判定调度是否重复
      */
-    private String username;
+    private String name;
+    private String description;
 
     /**
      * 周期
@@ -49,18 +50,6 @@ public class SchedulingJobDto extends AbstractPageDto {
      * 拓扑相关
      */
     private String topology;
-    private Boolean repeatSubmit;
-
-    /**
-     * 重启相关配置:
-     *  失败重试次数,
-     *  失败重试间隔
-     *
-     *
-     */
-    private Boolean exRestart;
-    private Integer waitingBatches;
-    private Boolean blockingRestart;
 
     /**
      * 告警相关配置
@@ -85,6 +74,7 @@ public class SchedulingJobDto extends AbstractPageDto {
     private String updateBy;
     private Date updateTime;
 
+    private String keyword;
 
     /**
      * WorkFlow中的执行节点列表

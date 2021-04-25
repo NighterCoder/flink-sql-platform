@@ -104,7 +104,7 @@ public class ScheduleSnapshot {
         // 遍历line,找到toId为currentNodeId的line
         for (Topology.Line line : top.lines) {
             if (line.toId().equals(currentNodeId)) {
-                previousNodeId = line.formId();
+                previousNodeId = line.fromId();
                 break;
             }
         }
@@ -165,7 +165,7 @@ public class ScheduleSnapshot {
             nodeIdToObj.remove(rootNodeId);
             top.lines.forEach(line -> {
                 // 挨个移除
-                if (!line.formId().equals(currentNodeId)) {
+                if (!line.fromId().equals(currentNodeId)) {
                     nodeIdToObj.remove(line.toId());
                 }
             });
@@ -218,7 +218,7 @@ public class ScheduleSnapshot {
             }
 
 
-            public String formId() {
+            public String fromId() {
                 return from.getString("id");
             }
 

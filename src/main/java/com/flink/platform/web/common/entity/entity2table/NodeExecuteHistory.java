@@ -58,9 +58,8 @@ public class NodeExecuteHistory {
 
     /**
      * 节点id
-     *
+     * <p>
      * 拿到节点id去获取当前节点执行命令可以去执行
-     *
      */
     private Integer nodeId;
     /**
@@ -111,7 +110,16 @@ public class NodeExecuteHistory {
     private Date modifyTime;
 
 
-
+    public void updateState(String state) {
+        this.state = state;
+        if (this.steps == null) {
+            this.steps = "[\"" + state + "\"]";
+        } else {
+            if (!this.steps.contains(state)) {
+                this.steps = this.steps.split("]")[0] + ",\"" + state + "\"]";
+            }
+        }
+    }
 
 
 

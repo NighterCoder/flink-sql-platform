@@ -1,19 +1,26 @@
 package com.flink.platform.web.common.entity.scheduling;
 
+import com.flink.platform.web.common.SystemConstants;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
 /**
  * 定时任务WorkFlow中的运行节点
- *
+ * <p>
  * Created by 凌战 on 2021/3/26
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class SchedulingJobNode {
 
     private String id;
-    private String label;
+    private String name;
     private String description;
 
     /**
@@ -21,27 +28,36 @@ public class SchedulingJobNode {
      */
     private Integer clusterId;
 
+    /**
+     * 所属的调度任务id
+     */
+    private Integer scheduleId;
 
     /**
-     * 节点类型:Flink/Spark/Start Node/End Node
-     * todo 创建对应枚举类
+     * 拓扑节点ID
      */
-    private Integer jobType;
+    private String scheduleTopNodeId;
+    private Integer monitorId;
 
     /**
-     * 执行类型:Jar/SQL
+     * 节点类型:Flink/Spark/
      * todo 创建对应枚举类
      */
-    private Integer executeType;
+    private String type;
 
+
+    private String timeout;
     /**
      * 如果是SQL执行类型,保存的SQL语句
      */
-    private String statement;
+    private String content;
+    private String input;
+    private String output;
 
     /**
      * 如果是Jar包执行类型,相关配置信息如资源使用,主方法类,参数等
      */
+    @Deprecated
     private String jarConfig;
 
 
@@ -53,6 +69,33 @@ public class SchedulingJobNode {
     private String updateBy;
     private Date updateTime;
 
+    /**
+     * yarn信息
+     */
+    private String user;
+    private String queue;
+    private String app;
+
+
+    public boolean isBatch() {
+        return SystemConstants.NodeType.FLINK_BATCH_SQL.equals(type) ||
+                SystemConstants.NodeType.SPARK_BATCH_JAR.equals(type) ||
+                SystemConstants.NodeType.SPARK_BATCH_SQL.equals(type);
+    }
+
+    public boolean isStream() {
+        return SystemConstants.NodeType.FLINK_STREAM_JAR.equals(type) ||
+                SystemConstants.NodeType.FLINK_STREAM_SQL.equals(type);
+    }
+
+
+    public boolean isYarn() {
+        return SystemConstants.NodeType.FLINK_BATCH_SQL.equals(type) ||
+                SystemConstants.NodeType.SPARK_BATCH_JAR.equals(type) ||
+                SystemConstants.NodeType.SPARK_BATCH_SQL.equals(type) ||
+                SystemConstants.NodeType.FLINK_STREAM_JAR.equals(type) ||
+                SystemConstants.NodeType.FLINK_STREAM_SQL.equals(type);
+    }
 
 
 }

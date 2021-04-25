@@ -1,5 +1,6 @@
 package com.flink.platform.web.common.entity.entity2table;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.flink.platform.web.common.SystemConstants;
 import lombok.AllArgsConstructor;
@@ -7,7 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.util.*;
 
 /**
  * Created by 凌战 on 2021/3/26
@@ -53,6 +54,8 @@ public class Schedule {
     private String updateBy;
 
 
+    private String keyword;
+
     /**
      * 生成定时表达式
      *
@@ -86,20 +89,28 @@ public class Schedule {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    public String generateCompareTopology() {
+        ScheduleSnapshot.Topology top = JSON.parseObject(topology, ScheduleSnapshot.Topology.class);
+        List<Map<String, String>> nodes = new ArrayList<>();
+        List<Map<String, String>> lines = new ArrayList<>();
+        top.nodes.forEach(node -> {
+            Map<String, String> nodeMap = new HashMap<>();
+            nodeMap.put("id", node.id);
+            nodes.add(nodeMap);
+        });
+        top.lines.forEach(line -> {
+            Map<String, String> lineMap = new HashMap<>();
+            lineMap.put("id", line.id);
+            lineMap.put("fromId", line.fromId());
+            lineMap.put("toId", line.toId());
+            lines.add(lineMap);
+        });
+        nodes.sort(Comparator.comparing(node -> node.get("id")));
+        lines.sort(Comparator.comparing(line -> line.get("id")));
+        Map<String, Object> topMap = new HashMap<>();
+        topMap.put("nodes", nodes);
+        topMap.put("lines", lines);
+        return JSON.toJSONString(topMap);
+    }
 
 }
