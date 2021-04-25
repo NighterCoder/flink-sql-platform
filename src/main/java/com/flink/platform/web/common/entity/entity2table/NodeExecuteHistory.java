@@ -1,7 +1,9 @@
 package com.flink.platform.web.common.entity.entity2table;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.flink.platform.web.common.SystemConstants;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +17,7 @@ import java.util.Date;
  * <p>
  * Created by 凌战 on 2021/4/22
  */
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -121,6 +124,13 @@ public class NodeExecuteHistory {
         }
     }
 
-
+    public boolean isRunning(){
+        return SystemConstants.JobState.WAITING_PARENT_.equals(state) ||
+                SystemConstants.JobState.INITED.equals(state) ||
+                SystemConstants.JobState.SUBMITTING.equals(state) ||
+                SystemConstants.JobState.SUBMITTED.equals(state) ||
+                SystemConstants.JobState.ACCEPTED.equals(state) ||
+                SystemConstants.JobState.RUNNING.equals(state);
+    }
 
 }

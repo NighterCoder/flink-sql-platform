@@ -9,6 +9,7 @@ import com.flink.platform.web.service.ClusterService;
 import com.flink.platform.web.service.MonitorService;
 import com.flink.platform.web.service.NodeExecuteHistoryService;
 import com.flink.platform.web.service.ScheduleNodeService;
+import com.flink.platform.web.utils.YarnApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
@@ -69,14 +70,48 @@ public class MonitorJob extends AbstractNoticeableJob implements InterruptableJo
          */
         scheduleNode = scheduleNodeService.getOne(
                 new QueryWrapper<ScheduleNode>()
-                .eq("monitor_id",monitorId)
+                        .eq("monitor_id", monitorId)
         );
+        nodeExecuteHistory = nodeExecuteHistoryService.
+                findNoScheduleLatestByNodeId(scheduleNode.getId());
+
+        /**
+         * 没有执行历史
+         */
+        if (nodeExecuteHistory == null) {
+            restart();
+            return;
+        }
+    }
+
+    /**
+     * 监控流处理
+     */
+    private void monitorFlinkStream(){
+        // 节点执行历史:在执行中
+        if (nodeExecuteHistory.isRunning()){
+            boolean exist = YarnApiUtils.existRunningJobs(cluster.getYarnUrl(), nodeExecuteHistory.getJobId());
+
+
+        }
+    }
 
 
 
 
 
 
+
+    /**
+     * 对于没有执行历史的监控任务节点,重新执行
+     */
+    private boolean restart() {
+        NodeExecuteHistory nodeExecuteHistory = nodeExecuteHistoryService.
+                findNoScheduleLatestByNodeId(scheduleNode.getId());
+        if (nodeExecuteHistory != null && nodeExecuteHistory.isRunning()) {
+            return true;
+        }
+        return scheduleNodeService.execute(scheduleNode, monitor);
     }
 
 

@@ -1,6 +1,8 @@
 package com.flink.platform.web.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.flink.platform.web.common.entity.HttpYarnApp;
 import org.apache.commons.lang3.StringUtils;
@@ -105,6 +107,48 @@ public class YarnApiUtils {
         }
         return new ArrayList<>();
     }
+
+
+    /**
+     * flink 判断是否存在运行中的job
+     * @param yarnUrl
+     * @param appId
+     * @return
+     */
+    public static boolean existRunningJobs(String yarnUrl,String appId){
+        // 获取jobId
+        String url = appendUrl(yarnUrl) + "proxy/%s/jobs";
+        url = String.format(url,appId);
+        OkHttpUtils.Result result = OkHttpUtils.doGet(url, null, HEADERS);
+        if (result.isSuccessful && StringUtils.isNotEmpty(result.content)){
+            try{
+                JSONArray jobs = JSON.parseObject(result.content).getJSONArray("jobs");
+                if (jobs != null) {
+                    for (int i = 0; i < jobs.size(); i ++) {
+                        JSONObject job = jobs.getJSONObject(i);
+                        if ("RUNNING".equals(job.get("status"))) {
+                            return true;
+                        }
+                    }
+                }
+                //for 1.4 version
+                jobs = JSON.parseObject(result.content).getJSONArray("jobs-running");
+                return jobs != null && jobs.size() > 0;
+            }catch (JSONException e){
+                //未处于运行状态的APP会返回html信息的问题
+            }
+        }
+        //请求失败判定为存在
+        return true;
+    }
+
+
+
+
+
+
+
+
 
 
 }

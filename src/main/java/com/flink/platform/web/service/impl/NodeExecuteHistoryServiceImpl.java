@@ -1,5 +1,6 @@
 package com.flink.platform.web.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
@@ -23,6 +24,20 @@ public class NodeExecuteHistoryServiceImpl extends ServiceImpl<NodeExecuteHistor
         nodeExecuteHistory.updateState(SystemConstants.JobState.FAILED);
         nodeExecuteHistory.setErrors("Missing scheduling");
         saveOrUpdate(nodeExecuteHistory);
+    }
+
+    /**
+     * 根据节点id查找,调度id不存在
+     * 根据创建时间倒序
+     * @param scheduleNodeId
+     */
+    @Override
+    public NodeExecuteHistory findNoScheduleLatestByNodeId(Integer scheduleNodeId) {
+        return getOne(new QueryWrapper<NodeExecuteHistory>()
+                .eq("node_id", scheduleNodeId)
+                .isNull("schedule_id")
+                .orderByDesc("create_time")
+        );
     }
 
 

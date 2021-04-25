@@ -1,6 +1,7 @@
 package com.flink.platform.web.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.flink.platform.web.common.entity.entity2table.Monitor;
 import com.flink.platform.web.common.entity.entity2table.ScheduleNode;
 import com.flink.platform.web.common.entity.scheduling.SchedulingJobNode;
 
@@ -11,5 +12,5 @@ public interface ScheduleNodeService extends IService<ScheduleNode> {
 
     String validate(SchedulingJobNode node);
 
-
+    boolean execute(ScheduleNode scheduleNode, Monitor monitor);
 }

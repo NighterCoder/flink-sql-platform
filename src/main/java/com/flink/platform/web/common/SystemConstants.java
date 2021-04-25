@@ -47,6 +47,15 @@ public interface SystemConstants {
         String FLINK_BATCH_SQL = "flink_batch_sql";
     }
 
+    /**
+     * 任务调度历史实例处理模式
+     */
+    interface HistoryMode {
+        String RETRY = "retry";
+        String RERUN = "rerun";
+        String SUPPLEMENT = "supplement";
+    }
+
 
     /**
      * Job分组
