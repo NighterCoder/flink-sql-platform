@@ -90,6 +90,43 @@ public interface SystemConstants {
         String PARENT_FAILED_ = "PARENT_FAILED";
     }
 
+    /**
+     * 任务告警
+     */
+    interface ErrorType{
+        /**
+         * 告警信息
+         */
+        String FAILED = "脚本执行失败";
+        String TIMEOUT = "脚本执行超时";
+
+        String SPARK_BATCH_UNUSUAL = "spark离线任务异常(%s)";
+        String SPARK_STREAM_WAITING_BATCH = "spark实时任务批次积压";
+        String SPARK_STREAM_WAITING_BATCH_RESTART = "spark实时任务批次积压，已重启";
+        String SPARK_STREAM_WAITING_BATCH_RESTART_FAILED = "spark实时任务批次积压，重启失败";
+        String SPARK_STREAM_UNUSUAL = "spark实时任务异常(%s)";
+        String SPARK_STREAM_UNUSUAL_RESTART = "spark实时任务异常(%s)，已重启";
+        String SPARK_STREAM_UNUSUAL_RESTART_FAILED = "spark实时任务异常(%s)，重启失败";
+
+        String FLINK_BATCH_UNUSUAL = "flink离线任务异常(%s)";
+        String FLINK_STREAM_NO_RUNNING_JOB = "flink实时任务无运行中的job";
+        String FLINK_STREAM_NO_RUNNING_JOB_RESTART = "flink实时任务无运行中的job，已重启";
+        String FLINK_STREAM_NO_RUNNING_JOB_RESTART_FAILED = "flink实时任务无运行中的job，重启失败";
+        String FLINK_STREAM_BACKPRESSURE = "flink实时任务阻塞";
+        String FLINK_STREAM_BACKPRESSURE_RESTART = "flink实时任务阻塞，已重启";
+        String FLINK_STREAM_BACKPRESSURE_RESTART_FAILED = "flink实时任务阻塞，重启失败";
+        String FLINK_STREAM_UNUSUAL = "flink实时任务异常(%s)";
+        String FLINK_STREAM_UNUSUAL_RESTART = "flink实时任务异常(%s)，已重启";
+        String FLINK_STREAM_UNUSUAL_RESTART_FAILED = "flink实时任务异常(%s)，重启失败";
+
+        String APP_DUPLICATE = "应用重复";
+        String APP_NO_RUNNING = "应用未运行";
+        String APP_MEMORY_OVERLIMIT = "内存超限";
+    }
+
+
+
+
 
     /**
      * 钉钉机器人消息API

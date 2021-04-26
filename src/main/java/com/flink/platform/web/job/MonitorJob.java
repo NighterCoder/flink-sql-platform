@@ -1,6 +1,7 @@
 package com.flink.platform.web.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.entity2table.Cluster;
 import com.flink.platform.web.common.entity.entity2table.Monitor;
 import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
@@ -9,6 +10,7 @@ import com.flink.platform.web.service.ClusterService;
 import com.flink.platform.web.service.MonitorService;
 import com.flink.platform.web.service.NodeExecuteHistoryService;
 import com.flink.platform.web.service.ScheduleNodeService;
+import com.flink.platform.web.utils.SchedulerUtils;
 import com.flink.platform.web.utils.YarnApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.InterruptableJob;
@@ -87,19 +89,42 @@ public class MonitorJob extends AbstractNoticeableJob implements InterruptableJo
     /**
      * 监控流处理
      */
-    private void monitorFlinkStream(){
+    private void monitorFlinkStream() {
         // 节点执行历史:在执行中
-        if (nodeExecuteHistory.isRunning()){
+        if (nodeExecuteHistory.isRunning()) {
             boolean exist = YarnApiUtils.existRunningJobs(cluster.getYarnUrl(), nodeExecuteHistory.getJobId());
+            if (!exist) {
+                // 5mins还没有运行,重启
+                if (System.currentTimeMillis() - nodeExecuteHistory.getStartTime().getTime() >= 300000) {
+                    YarnApiUtils.killApp(cluster.getYarnUrl(), nodeExecuteHistory.getJobId());
+                    // 节点执行状态更新为KILLED
+                    nodeExecuteHistory.updateState(SystemConstants.JobState.KILLED);
+                    nodeExecuteHistoryService.saveOrUpdate(nodeExecuteHistory);
+                    // 重启任务
+                    // todo Flink重启任务可以从checkpoint恢复
+                    boolean restart = restart();
+                    if (restart) {
+                        notice(nodeExecuteHistory, SystemConstants.ErrorType.FLINK_STREAM_NO_RUNNING_JOB_RESTART);
+                    } else {
+                        notice(nodeExecuteHistory, SystemConstants.ErrorType.FLINK_STREAM_NO_RUNNING_JOB_RESTART_FAILED);
+                    }
+                } else {
+                    notice(nodeExecuteHistory, SystemConstants.ErrorType.FLINK_STREAM_NO_RUNNING_JOB);
+                }
+            } else {
+                // 任务阻塞判断
+                if (monitor.getWaitingBatches() == 0){
+                    return;
+                }
+                // 获取背压数据
 
+
+
+
+            }
 
         }
     }
-
-
-
-
-
 
 
     /**
@@ -112,6 +137,14 @@ public class MonitorJob extends AbstractNoticeableJob implements InterruptableJo
             return true;
         }
         return scheduleNodeService.execute(scheduleNode, monitor);
+    }
+
+
+    public static void build(Monitor monitor) {
+        SchedulerUtils.scheduleCronJob(MonitorJob.class,
+                monitor.getId(),
+                SystemConstants.JobGroup.MONITOR,
+                monitor.generateCron());
     }
 
 

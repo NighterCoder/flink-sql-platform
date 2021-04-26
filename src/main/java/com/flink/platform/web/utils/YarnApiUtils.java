@@ -4,15 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
+import com.flink.platform.web.common.entity.BackpressureInfo;
 import com.flink.platform.web.common.entity.HttpYarnApp;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Yarn 工具类
@@ -111,20 +109,21 @@ public class YarnApiUtils {
 
     /**
      * flink 判断是否存在运行中的job
+     *
      * @param yarnUrl
      * @param appId
      * @return
      */
-    public static boolean existRunningJobs(String yarnUrl,String appId){
+    public static boolean existRunningJobs(String yarnUrl, String appId) {
         // 获取jobId
         String url = appendUrl(yarnUrl) + "proxy/%s/jobs";
-        url = String.format(url,appId);
+        url = String.format(url, appId);
         OkHttpUtils.Result result = OkHttpUtils.doGet(url, null, HEADERS);
-        if (result.isSuccessful && StringUtils.isNotEmpty(result.content)){
-            try{
+        if (result.isSuccessful && StringUtils.isNotEmpty(result.content)) {
+            try {
                 JSONArray jobs = JSON.parseObject(result.content).getJSONArray("jobs");
                 if (jobs != null) {
-                    for (int i = 0; i < jobs.size(); i ++) {
+                    for (int i = 0; i < jobs.size(); i++) {
                         JSONObject job = jobs.getJSONObject(i);
                         if ("RUNNING".equals(job.get("status"))) {
                             return true;
@@ -134,7 +133,7 @@ public class YarnApiUtils {
                 //for 1.4 version
                 jobs = JSON.parseObject(result.content).getJSONArray("jobs-running");
                 return jobs != null && jobs.size() > 0;
-            }catch (JSONException e){
+            } catch (JSONException e) {
                 //未处于运行状态的APP会返回html信息的问题
             }
         }
@@ -142,13 +141,204 @@ public class YarnApiUtils {
         return true;
     }
 
+    /**
+     * 杀掉Yarn上的任务
+     *
+     * @param yarnUrl
+     * @param appId
+     * @return
+     */
+    public static boolean killApp(String yarnUrl, String appId) {
+        String stateUrl = getAppsUrl(yarnUrl) + "/" + appId + "/state";
+        OkHttpUtils.Result result = OkHttpUtils.doPut(stateUrl, OkHttpUtils.MEDIA_JSON, "{\"state\": \"KILLED\"}", HEADERS);
+        if (result.isSuccessful && StringUtils.isNotEmpty(result.content)) {
+            JSONObject jsonObject = JSON.parseObject(result.content);
+            String state = jsonObject.getString("state");
+            return StringUtils.isNotEmpty(state);
+        }
+        return false;
+    }
 
 
+    /**
+     * flink 背压监测阻塞任务数
+     * 上游算子的生产速度快于下游算子的消费速度
+     *
+     * OK：0 <= Ratio <= 0.10
+     * LOW：0.10 <Ratio <= 0.5
+     * HIGH：0.5 <Ratio <= 1
+     *
+     * @param yarnUrl
+     * @param appId
+     */
+    public static BackpressureInfo backpressure(String yarnUrl, String appId) {
+        // 获取运行着的jobId
+        String url = appendUrl(yarnUrl) + "proxy/%s/jobs";
+        url = String.format(url, appId);
+        OkHttpUtils.Result result = OkHttpUtils.doGet(url, null, HEADERS);
+        if (result.isSuccessful && StringUtils.isNotEmpty(result.content)) {
+            try {
+                // job列表,per job模式正常只有一个
+                String id = null;
+                JSONArray jobs = JSON.parseObject(result.content).getJSONArray("jobs");
+                if (jobs != null) {
+                    JSONObject job = jobs.getJSONObject(0);
+                    if (job != null && "RUNNING".equals(job.get("status"))) {
+                        id = job.getString("id");
+                    }
+                }
+                /**
+                 * 特殊处理 Flink 1.4版本
+                 */
+                if (id == null) {
+                    jobs = JSON.parseObject(result.content).getJSONArray("jobs-running");
+                    if (jobs != null && jobs.size() > 0) {
+                        id = jobs.getString(0);
+                    }
+                }
+                /**
+                 * 拿到具体Flink任务的job id
+                 */
+                if (id != null) {
+                    url += "/" + id;
+                    result = OkHttpUtils.doGet(url, null, HEADERS);
+                    /**
+                     * jid,
+                     * name,
+                     * isStoppable,
+                     * state,
+                     * start-time,
+                     * end-time,
+                     * duration,
+                     * now,
+                     * timestamp:{}
+                     * vertices:{
+                     *     id:
+                     *     name:
+                     *     parallelism:
+                     *     status:
+                     *     start-time:
+                     *     end-time:
+                     *     duration
+                     *     tasks:{}
+                     *     metrics:{}
+                     * }
+                     * status-counts:{}
+                     * plan:{}
+                     */
+                    if (result.isSuccessful && StringUtils.isNotEmpty(result.content)) {
+                        JSONObject jobDetails = JSON.parseObject(result.content);
+                        JSONArray vertices = jobDetails.getJSONArray("vertices");
+                        for (int i = vertices.size() - 1; i >= 0; i--) {
+                            // 获取顶点即最后一个算子的背压监控数据
+                            JSONObject vertexObject = vertices.getJSONObject(i);
+                            /**
+                             * 最后一个算子的id
+                             */
+                            String vertexId = vertexObject.getString("id");
+                            String backPressureUrl = url + "/vertices/" + vertexId + "/backpressure";
+                            JSONArray subtasks = null;
+                            int count = 0;
+                            for (; ; ) {
+                                count++;
+                                // 第一次请求 status:deprecated,无数据
+                                result = OkHttpUtils.doGet(backPressureUrl, null, HEADERS);
+                                if (result.isSuccessful && StringUtils.isNotEmpty(result.content)
+                                        && JSON.parseObject(result.content).getJSONArray("subtasks") != null) {
+                                    /**
+                                     * {
+                                     *  "status":"ok",
+                                     *  "backpressure-level":"ok",
+                                     *  "end-timestamp":1619418503645,
+                                     *  "subtasks":[
+                                     *      {"subtask":0,"backpressure-level":"ok","ratio":0.0},
+                                     *      {"subtask":1,"backpressure-level":"ok","ratio":0.0},
+                                     *      {"subtask":2,"backpressure-level":"ok","ratio":0.0},
+                                     *      {"subtask":3,"backpressure-level":"ok","ratio":0.0},
+                                     *      {"subtask":4,"backpressure-level":"ok","ratio":0.0}
+                                     *      ]
+                                     *  }
+                                     */
+                                    subtasks = JSON.parseObject(result.content).getJSONArray("subtasks");
+                                    if (subtasks != null) {
+                                        break;
+                                    }
+                                    Thread.sleep(2000);
+                                }
+                                // 重试十次无结果就返回
+                                if (count > 10) {
+                                    break;
+                                }
+                            }
+
+                            if (subtasks != null) {
+                                for (int j = 0; j < subtasks.size(); j++) {
+                                    /**
+                                     * plan:{
+                                     *    jid:
+                                     *    name:
+                                     *    nodes:[{
+                                     *        id,
+                                     *        parallelism,
+                                     *        operator,
+                                     *        operator_strategy,
+                                     *        description: 算子名称
+                                     *        input:[
+                                     *          {
+                                     *              num:0,
+                                     *              id:
+                                     *              ship_strategy:
+                                     *              exchange
+                                     *          },...
+                                     *        ],
+                                     *        optimizer_properties
+                                     *    },...
+                                     *   ]
+                                     * }
+                                     *
+                                     *
+                                     */
+                                    JSONObject subtask = subtasks.getJSONObject(i);
+                                    // 大于0
+                                    if (subtask.getDouble("ratio") > 0) {
+                                        Set<String> names = new HashSet<>();
+                                        JSONArray nodes = jobDetails.getJSONObject("plan").getJSONArray("nodes");
+                                        for (int k = 0; k < nodes.size(); k++) {
+                                            JSONObject node = nodes.getJSONObject(0);
+                                            JSONArray jsonArray = node.getJSONArray("inputs");
+                                            // 寻找输入节点为vertexId的节点id
+                                            if (jsonArray != null) {
+                                                jsonArray.forEach(item -> {
+                                                    if (vertexId.equals(((JSONObject) item).getString("id"))) {
+                                                        /**
+                                                         * 获取到算子的名称
+                                                         */
+                                                        names.add(node.getString("description").replaceAll("-&gt;", "->"));
+                                                    }
+                                                });
+                                            }
+                                        }
 
 
-
-
-
+                                        if (!names.isEmpty()) {
+                                            return new BackpressureInfo((int) (subtask.getDouble("ratio") * 100), org.apache.commons.lang.StringUtils.join(names, ","));
+                                        } else {
+                                            return new BackpressureInfo((int) (subtask.getDouble("ratio") * 100), vertexObject.getString("name"));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (JSONException e) {
+                // 未处于运行状态中的APP会返回html信息的问题
+            } catch (Exception e) {
+                LOG.error("backpressure execute error: " + e.getMessage(), e);
+            }
+        }
+        return null;
+    }
 
 
 }
