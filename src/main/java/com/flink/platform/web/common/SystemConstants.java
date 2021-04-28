@@ -40,6 +40,7 @@ public interface SystemConstants {
     interface NodeType {
         String SPARK_BATCH_JAR = "spark_batch_jar";
         String SPARK_BATCH_SQL = "spark_batch_sql";
+        String SPARK_STREAM_JAR = "spark_stream_jar";
 
 
         String FLINK_STREAM_JAR = "flink_stream_jar";
@@ -82,6 +83,8 @@ public interface SystemConstants {
         String TIMEOUT = "TIMEOUT";
         String SUBMITTING_TIMEOUT = "SUBMITTING_TIMEOUT";
         String SUBMITTING_FAILED = "SUBMITTING_FAILED";
+        String FINISHED = "FINISHED";
+
         /**
          * 调度扩展执行状态
          */

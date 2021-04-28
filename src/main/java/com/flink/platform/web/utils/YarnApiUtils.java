@@ -163,7 +163,7 @@ public class YarnApiUtils {
     /**
      * flink 背压监测阻塞任务数
      * 上游算子的生产速度快于下游算子的消费速度
-     *
+     * <p>
      * OK：0 <= Ratio <= 0.10
      * LOW：0.10 <Ratio <= 0.5
      * HIGH：0.5 <Ratio <= 1
@@ -233,7 +233,7 @@ public class YarnApiUtils {
                             // 获取顶点即最后一个算子的背压监控数据
                             JSONObject vertexObject = vertices.getJSONObject(i);
                             /**
-                             * 最后一个算子的id
+                             * 从最后一个算子开始算
                              */
                             String vertexId = vertexObject.getString("id");
                             String backPressureUrl = url + "/vertices/" + vertexId + "/backpressure";
@@ -305,6 +305,7 @@ public class YarnApiUtils {
                                         JSONArray nodes = jobDetails.getJSONObject("plan").getJSONArray("nodes");
                                         for (int k = 0; k < nodes.size(); k++) {
                                             JSONObject node = nodes.getJSONObject(0);
+                                            // inputs
                                             JSONArray jsonArray = node.getJSONArray("inputs");
                                             // 寻找输入节点为vertexId的节点id
                                             if (jsonArray != null) {
@@ -319,7 +320,10 @@ public class YarnApiUtils {
                                             }
                                         }
 
-
+                                        /**
+                                         * 如果是最后一个算子发生背压,那么最后就是vertexObject.getString("name");
+                                         * 如果不是最后一个算子,找出节点输入源为当前算子的节点名称: 例如 A->B A->C, 如果A的某个子线程ratio>0,那么B和C都会告警
+                                         */
                                         if (!names.isEmpty()) {
                                             return new BackpressureInfo((int) (subtask.getDouble("ratio") * 100), org.apache.commons.lang.StringUtils.join(names, ","));
                                         } else {
@@ -336,6 +340,46 @@ public class YarnApiUtils {
             } catch (Exception e) {
                 LOG.error("backpressure execute error: " + e.getMessage(), e);
             }
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取最后一次提交的未处于运行状态的应用
+     *
+     * @param yarnUrl
+     * @param user
+     * @param queue
+     * @param name
+     * @param retries
+     */
+    public static HttpYarnApp getLastNoActiveApp(String yarnUrl, String user, String queue, String name, int retries) {
+        if (!queue.startsWith("root.")) {
+            queue = "root." + queue;
+        }
+        Map<String, Object> params = new HashMap<>();
+        params.put("user", user);
+        params.put("state", "finished,killed,failed");
+        for (; ; ) {
+            OkHttpUtils.Result result = OkHttpUtils.doGet(getAppsUrl(yarnUrl), params, HEADERS);
+            List<HttpYarnApp> appList = parseAppsApiResponse(result);
+            if (!appList.isEmpty()) {
+                appList.sort((app1, app2) -> {
+                    long time1 = app1.getFinishedTime();
+                    long time2 = app2.getFinishedTime();
+                    return Long.compare(time2, time1);
+                });
+                for (HttpYarnApp httpYarnApp : appList) {
+                    if (httpYarnApp.getQueue().equals(queue) && httpYarnApp.getName().equals(name)) {
+                        return httpYarnApp;
+                    }
+                }
+            }
+            if (retries <= 0) {
+                break;
+            }
+            retries--;
         }
         return null;
     }

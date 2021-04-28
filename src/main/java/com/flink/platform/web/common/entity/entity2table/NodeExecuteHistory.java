@@ -35,7 +35,7 @@ public class NodeExecuteHistory {
     /**
      * 拓扑节点id
      */
-    private String scheduleTopNodeId;
+    private String scheduleTopologyNodeId;
 
     /**
      * 调度快照id
@@ -52,6 +52,9 @@ public class NodeExecuteHistory {
      * 3.supplement 补数
      */
     private String scheduleHistoryMode;
+    /**
+     * 调度的历史时间,是提前算出来的
+     */
     private Date scheduleHistoryTime;
 
     /**
@@ -75,13 +78,19 @@ public class NodeExecuteHistory {
 
     private Integer clusterId;
 
+    /**
+     * 执行超时时间
+     */
     private Integer timeout;
 
     private String content; // ????
 
     private String outputs; // ????
 
-    private String errors;  // ????
+    /**
+     * 运行失败的任务的错误日志
+     */
+    private String errors;
 
     private Integer createBy;
 
@@ -103,7 +112,7 @@ public class NodeExecuteHistory {
      * for spark or flink job
      */
     private String jobId;
-    private String jodUrl;
+    private String jobUrl;
     private String jobFinalStatus;
 
 

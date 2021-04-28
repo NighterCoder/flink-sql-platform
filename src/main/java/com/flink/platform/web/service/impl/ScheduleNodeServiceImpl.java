@@ -63,6 +63,11 @@ public class ScheduleNodeServiceImpl extends ServiceImpl<ScheduleNodeMapper, Sch
         return false;
     }
 
+    @Override
+    public NodeExecuteHistory generateHistory(ScheduleNode scheduleNode, ScheduleSnapshot scheduleSnapshot, String scheduleInstanceId, int generateStatus) {
+        return generateHistory(scheduleNode,null,scheduleSnapshot,scheduleInstanceId,generateStatus);
+    }
+
 
     /**
      * 生成执行历史
@@ -96,17 +101,19 @@ public class ScheduleNodeServiceImpl extends ServiceImpl<ScheduleNodeMapper, Sch
 
         NodeExecuteHistory nodeExecuteHistory;
         /**
-         * 确认过的
+         * generateStatus 的值为 1
+         *
+         * 说明是要找出当前节点待确认的执行历史,更新其状态
          */
         if (scheduleSnapshot != null && generateStatus == 1) {
             nodeExecuteHistory = nodeExecuteHistoryService.getOne(new QueryWrapper<NodeExecuteHistory>()
                     .eq("schedule_id", scheduleSnapshot.getScheduleId())
-                    .eq("schedule_top_node_id", scheduleNode.getScheduleTopNodeId())
+                    .eq("schedule_top_node_id", scheduleNode.getScheduleTopologyNodeId())
                     .eq("schedule_instance_id", scheduleInstanceId)
                     .eq("state", SystemConstants.JobState.UN_CONFIRMED_));
         } else {
             /**
-             *
+             * 节点执行历史
              */
             nodeExecuteHistory = NodeExecuteHistory.builder()
                     .nodeId(scheduleNode.getId())
@@ -122,10 +129,10 @@ public class ScheduleNodeServiceImpl extends ServiceImpl<ScheduleNodeMapper, Sch
          */
         if (scheduleSnapshot != null) {
             nodeExecuteHistory.setScheduleId(scheduleSnapshot.getScheduleId());
-            nodeExecuteHistory.setScheduleTopNodeId(scheduleNode.getScheduleTopNodeId());
+            nodeExecuteHistory.setScheduleTopologyNodeId(scheduleNode.getScheduleTopologyNodeId());
             nodeExecuteHistory.setScheduleSnapshotId(scheduleSnapshot.getId());
             nodeExecuteHistory.setScheduleInstanceId(scheduleInstanceId);
-            // 如果是部署
+            // 如果是补数的话
             if (generateStatus == 2) {
                 nodeExecuteHistory.setScheduleHistoryMode(SystemConstants.HistoryMode.SUPPLEMENT);
                 Date now = new Date();

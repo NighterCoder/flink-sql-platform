@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class HttpYarnApp {
 
-    private String id;
+    private String id; // 对应ApplicationId
     private String name;
     private String user;
     private String queue;

@@ -179,7 +179,7 @@ public class ScheduleSnapshot {
         public List<Line> lines;
 
         /**
-         * 节点
+         * 节点: 这里的id对应scheduleTopologyNodeId
          */
         public static class Node {
             public String id;
@@ -196,6 +196,7 @@ public class ScheduleSnapshot {
             }
 
             // 重试间隔
+            // minute为单位
             public int intervals() {
                 return data.getIntValue("intervals");
             }

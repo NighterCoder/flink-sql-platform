@@ -21,8 +21,7 @@ public class Test {
 
     public static void main(String[] args) {
 
-        OkHttpUtils.Result result = OkHttpUtils.doGet("http://phm-data01:8088/proxy/application_1619077805256_0011/jobs/70993486bdccc00ce3e3c0de2e827c28/vertices/bd9c186e89cc37a76d776844dfa8ccba/backpressure",null,HEADERS);
-        System.out.println(result.isSuccessful);
+        YarnApiUtils.backpressure("http://phm-data01:8088","application_1619077805256_0031");
 
 
     }

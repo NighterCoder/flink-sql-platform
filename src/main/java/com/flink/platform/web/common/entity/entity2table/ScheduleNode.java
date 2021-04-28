@@ -35,7 +35,7 @@ public class ScheduleNode {
     /**
      * 拓扑节点ID
      */
-    private String scheduleTopNodeId;
+    private String scheduleTopologyNodeId;
     private Integer monitorId;
 
     /**

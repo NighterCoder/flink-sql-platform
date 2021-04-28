@@ -2,6 +2,7 @@ package com.flink.platform.web.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.flink.platform.web.common.SystemConstants;
+import com.flink.platform.web.common.entity.BackpressureInfo;
 import com.flink.platform.web.common.entity.entity2table.Cluster;
 import com.flink.platform.web.common.entity.entity2table.Monitor;
 import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
@@ -20,7 +21,7 @@ import org.quartz.JobKey;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * 监控运行任务
+ * 监控运行任务,主要是监控流处理任务
  * <p>
  * Created by 凌战 on 2021/4/25
  */
@@ -57,7 +58,7 @@ public class MonitorJob extends AbstractNoticeableJob implements InterruptableJo
     }
 
     @Override
-    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+    public void execute(JobExecutionContext jobExecutionContext) {
         this.jobKey = jobExecutionContext.getJobDetail().getKey();
         thread = Thread.currentThread();
         Integer monitorId = Integer.parseInt(jobExecutionContext.getJobDetail().getKey().getName());
@@ -84,10 +85,33 @@ public class MonitorJob extends AbstractNoticeableJob implements InterruptableJo
             restart();
             return;
         }
+        if (SystemConstants.JobState.INITED.equals(nodeExecuteHistory.getState()) ||
+                SystemConstants.JobState.SUBMITTING.equals(nodeExecuteHistory.getState())) {
+            return;
+        }
+        /**
+         * 还没有生成JobId
+         */
+        if (nodeExecuteHistory.isRunning() && nodeExecuteHistory.getJobId() == null) {
+            return;
+        }
+        cluster = clusterService.getById(scheduleNode.getClusterId());
+        if (SystemConstants.NodeType.SPARK_STREAM_JAR.equals(nodeExecuteHistory.getNodeType())) {
+            monitorSparkStream();
+        } else if (SystemConstants.NodeType.FLINK_STREAM_SQL.equals(nodeExecuteHistory.getNodeType()) ||
+                SystemConstants.NodeType.FLINK_STREAM_JAR.equals(nodeExecuteHistory.getNodeType())) {
+            monitorFlinkStream();
+        }
     }
 
+
+    private void monitorSparkStream() {
+
+    }
+
+
     /**
-     * 监控流处理
+     * 监控Flink流处理
      */
     private void monitorFlinkStream() {
         // 节点执行历史:在执行中
@@ -113,16 +137,58 @@ public class MonitorJob extends AbstractNoticeableJob implements InterruptableJo
                 }
             } else {
                 // 任务阻塞判断
-                if (monitor.getWaitingBatches() == 0){
+                if (monitor.getWaitingBatches() == 0) {
                     return;
                 }
                 // 获取背压数据
+                BackpressureInfo backpressureInfo = YarnApiUtils.backpressure(cluster.getYarnUrl(), nodeExecuteHistory.getJobId());
+                if (backpressureInfo == null) {
+                    return;
+                }
+                /**
+                 *  监控设置的阻塞任务阈值
+                 */
 
-
-
-
+                int maxBatches = monitor.getWaitingBatches();
+                boolean isOverBatches = backpressureInfo.ratio >= maxBatches;
+                /**
+                 * 超过阈值产生告警
+                 */
+                if (isOverBatches) {
+                    /**
+                     * 监控任务设置了阻塞重启,
+                     * 那么发生了阻塞,就会重新启动任务
+                     */
+                    if (monitor.getBlockingRestart()) {
+                        YarnApiUtils.killApp(cluster.getYarnUrl(), nodeExecuteHistory.getJobId());
+                        nodeExecuteHistory.updateState(SystemConstants.JobState.KILLED);
+                        nodeExecuteHistoryService.saveOrUpdate(nodeExecuteHistory);
+                        boolean restart = restart();
+                        if (restart) {
+                            notice(nodeExecuteHistory, SystemConstants.ErrorType.FLINK_STREAM_NO_RUNNING_JOB_RESTART);
+                        } else {
+                            notice(nodeExecuteHistory, SystemConstants.ErrorType.FLINK_STREAM_NO_RUNNING_JOB_RESTART_FAILED);
+                        }
+                    } else {
+                        notice(nodeExecuteHistory, SystemConstants.ErrorType.FLINK_STREAM_BACKPRESSURE + "(trouble vertex: " + backpressureInfo.nextVertex + ")");
+                    }
+                }
             }
-
+        } else {
+            /**
+             * 发生异常重启任务
+             */
+            if (monitor.getExRestart()) {
+                boolean restart = restart();
+                if (restart) {
+                    // 打印出最后的状态
+                    notice(nodeExecuteHistory, String.format(SystemConstants.ErrorType.FLINK_STREAM_UNUSUAL_RESTART, nodeExecuteHistory.getJobFinalStatus()));
+                } else {
+                    notice(nodeExecuteHistory, String.format(SystemConstants.ErrorType.FLINK_STREAM_UNUSUAL_RESTART_FAILED, nodeExecuteHistory.getJobFinalStatus()));
+                }
+            } else {
+                notice(nodeExecuteHistory, String.format(SystemConstants.ErrorType.FLINK_STREAM_UNUSUAL, nodeExecuteHistory.getJobFinalStatus()));
+            }
         }
     }
 
@@ -139,9 +205,13 @@ public class MonitorJob extends AbstractNoticeableJob implements InterruptableJo
         return scheduleNodeService.execute(scheduleNode, monitor);
     }
 
-
+    /**
+     * 流处理监控,没有开始时间和结束时间
+     * @param monitor
+     */
     public static void build(Monitor monitor) {
-        SchedulerUtils.scheduleCronJob(MonitorJob.class,
+        SchedulerUtils.scheduleCronJob(
+                MonitorJob.class,
                 monitor.getId(),
                 SystemConstants.JobGroup.MONITOR,
                 monitor.generateCron());

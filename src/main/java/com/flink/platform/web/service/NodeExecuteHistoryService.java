@@ -12,9 +12,13 @@ public interface NodeExecuteHistoryService extends IService<NodeExecuteHistory> 
 
     /**
      * 监控启动: 监控任务没有scheduleId,只有一个执行节点
-     * @param scheduleNodeId
+     *
+     * @param scheduleNodeId 调度节点id
      */
     NodeExecuteHistory findNoScheduleLatestByNodeId(Integer scheduleNodeId);
+
+
+    boolean execTimeout(NodeExecuteHistory nodeExecuteHistory);
 
 
 }
