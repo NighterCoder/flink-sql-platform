@@ -6,6 +6,7 @@ import com.flink.platform.web.common.entity.entity2table.*;
 import com.flink.platform.web.job.MonitorJob;
 import com.flink.platform.web.job.NodeExecuteHistoryYarnStateRefreshJob;
 import com.flink.platform.web.job.ScheduleJob;
+import com.flink.platform.web.job.ScheduleSubmitJob;
 import com.flink.platform.web.job.system.ActiveYarnAppRefreshJob;
 import com.flink.platform.web.service.*;
 import com.flink.platform.web.utils.SchedulerUtils;
@@ -86,6 +87,10 @@ public class ApplicationReadyListener implements ApplicationListener<Application
          * 2.已经不在yarn上运行的任务,去获取最近完成的任务,将相应的一些属性赋值进去
          */
         SchedulerUtils.scheduleCronJob(NodeExecuteHistoryYarnStateRefreshJob.class, "*/5 * * * * ?");
+
+        SchedulerUtils.scheduleCronJob(ScheduleSubmitJob.class,"*/1 * * * * ?");
+
+
 
 
     }
