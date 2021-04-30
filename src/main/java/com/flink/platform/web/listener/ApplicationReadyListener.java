@@ -3,10 +3,7 @@ package com.flink.platform.web.listener;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.entity2table.*;
-import com.flink.platform.web.job.MonitorJob;
-import com.flink.platform.web.job.NodeExecuteHistoryYarnStateRefreshJob;
-import com.flink.platform.web.job.ScheduleJob;
-import com.flink.platform.web.job.ScheduleSubmitJob;
+import com.flink.platform.web.job.*;
 import com.flink.platform.web.job.system.ActiveYarnAppRefreshJob;
 import com.flink.platform.web.service.*;
 import com.flink.platform.web.utils.SchedulerUtils;
@@ -76,11 +73,20 @@ public class ApplicationReadyListener implements ApplicationListener<Application
      * 2. 作业状态更新任务()
      */
     private void startResidentMission() {
+
         /**
+         * cron表达式: 秒 分 时 月份中日期(1-31) 月份(1-12) 星期(1-7)
+         */
+
+
+        /**
+         * 每隔 10s 执行1次
          * 启动任务:yarn应用列表状态更新
          */
         SchedulerUtils.scheduleCronJob(ActiveYarnAppRefreshJob.class, "*/10 * * * * ?");
         /**
+         * 每隔 5s 执行1次
+         *
          * 启动作业状态更新任务:
          * 主要是将保存到数据库中的各节点执行实例状态与yarn上的app状态进行对比
          * 1.仍然还在yarn上运行中的任务,就更新数据库中的节点执行实例,状态为运行中
@@ -88,7 +94,26 @@ public class ApplicationReadyListener implements ApplicationListener<Application
          */
         SchedulerUtils.scheduleCronJob(NodeExecuteHistoryYarnStateRefreshJob.class, "*/5 * * * * ?");
 
+        /**
+         * 每隔 1s 执行1次
+         *
+         * 启动调度记录的更新记录,主要更新等待父节点的子节点
+         */
         SchedulerUtils.scheduleCronJob(ScheduleSubmitJob.class,"*/1 * * * * ?");
+
+        /**
+         * 每隔 10s 执行1次
+         *
+         * 节点执行实例执行超时处理任务
+         */
+        SchedulerUtils.scheduleCronJob(NodeExecuteHistoryTimeoutJob.class,"*/10 * * * * ?");
+
+        /**
+         * 每隔 1天 执行1次,每天0时0分0秒
+         *
+         * 定时清理节点执行实例
+         */
+        SchedulerUtils.scheduleCronJob(NodeExecuteHistoryClearJob.class,"0 0 0 */1 * ?");
 
 
 

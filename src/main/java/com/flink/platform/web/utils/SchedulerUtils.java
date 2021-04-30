@@ -110,13 +110,14 @@ public class SchedulerUtils {
 
     /**
      * 暂停任务
-     * @param name 任务名称
+     *
+     * @param name  任务名称
      * @param group 任务所属组
      */
-    public static void pauseJob(Object name,String group){
-        JobKey jobKey = new JobKey(String.valueOf(name),group);
+    public static void pauseJob(Object name, String group) {
+        JobKey jobKey = new JobKey(String.valueOf(name), group);
         try {
-            if (scheduler.checkExists(jobKey)){
+            if (scheduler.checkExists(jobKey)) {
                 scheduler.pauseJob(jobKey);
             }
         } catch (SchedulerException e) {
@@ -125,7 +126,41 @@ public class SchedulerUtils {
     }
 
 
+    /**
+     * 删除任务
+     *
+     * @param name  任务名称
+     * @param group 任务所属组
+     */
+    public static void deleteJob(Object name, String group) {
+        JobKey jobKey = new JobKey(String.valueOf(name), group);
 
+        try {
+            if (scheduler.checkExists(jobKey)) {
+                scheduler.deleteJob(jobKey);
+            }
+        } catch (SchedulerException e) {
+            LOGGER.warn("Delete job error, name=" + name + " and group=" + group, e);
+        }
+    }
+
+    /**
+     * 暂停任务
+     *
+     * @param name  任务名称
+     * @param group 任务所属组
+     */
+    public static void interruptJob(Object name, String group) {
+        JobKey jobKey = new JobKey(String.valueOf(name), group);
+
+        try {
+            if (scheduler.checkExists(jobKey)) {
+                scheduler.interrupt(jobKey);
+            }
+        } catch (SchedulerException e) {
+            LOGGER.warn("Interrupt job error, name=" + name + " and group=" + group, e);
+        }
+    }
 
 
 }

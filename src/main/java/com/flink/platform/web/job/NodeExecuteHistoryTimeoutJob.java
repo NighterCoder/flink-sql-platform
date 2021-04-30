@@ -8,6 +8,7 @@ import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
 import com.flink.platform.web.common.entity.entity2table.ScheduleNode;
 import com.flink.platform.web.service.ClusterService;
 import com.flink.platform.web.service.ScheduleNodeService;
+import com.flink.platform.web.utils.SchedulerUtils;
 import com.flink.platform.web.utils.YarnApiUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.quartz.DisallowConcurrentExecution;
@@ -73,16 +74,16 @@ public class NodeExecuteHistoryTimeoutJob extends AbstractRetryableJob implement
                         HttpYarnApp httpYarnApp = YarnApiUtils.getActiveApp(cluster.getYarnUrl(), scheduleNode.getUser(), scheduleNode.getQueue(),
                                 scheduleNode.getApp() + ".deer_instance_" + (scheduleNode.isBatch() ? "b" : "s") + DATE_FORMAT.format(scheduleNode.getCreateTime()), 3);
                         // 如果没有的话,说明已经提交了
-                        if (httpYarnApp != null){
+                        if (httpYarnApp != null) {
                             retry = false;
                             nodeExecuteHistory.updateState(SystemConstants.JobState.SUBMITTED);
                             // 状态未知
                             nodeExecuteHistory.setJobFinalStatus("UNDEFINED");
-                        }else{
+                        } else {
                             nodeExecuteHistory.updateState(SystemConstants.JobState.SUBMITTING_TIMEOUT);
                             nodeExecuteHistory.setFinishTime(new Date());
                         }
-                    }else{
+                    } else {
                         nodeExecuteHistory.updateState(SystemConstants.JobState.SUBMITTING_TIMEOUT);
                         nodeExecuteHistory.setFinishTime(new Date());
                     }
@@ -90,9 +91,17 @@ public class NodeExecuteHistoryTimeoutJob extends AbstractRetryableJob implement
 
                 nodeExecuteHistoryService.saveOrUpdate(nodeExecuteHistory);
 
+                // 处理调度
+                /**
+                 * 先暂停任务,再删除任务
+                 */
+                SchedulerUtils.pauseJob(nodeExecuteHistory.getId(), SystemConstants.JobGroup.SCRIPT_HISTORY);
+                SchedulerUtils.deleteJob(nodeExecuteHistory.getId(), SystemConstants.JobGroup.SCRIPT_HISTORY);
 
 
-
+                if (retry) {
+                    retryCurrentNode(nodeExecuteHistory, SystemConstants.ErrorType.TIMEOUT);
+                }
 
             }
         }

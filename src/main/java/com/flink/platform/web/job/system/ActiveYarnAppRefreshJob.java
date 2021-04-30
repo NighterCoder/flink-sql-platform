@@ -218,7 +218,7 @@ public class ActiveYarnAppRefreshJob implements InterruptableJob {
         for (YarnApp yarnApp:yarnApps){
             if ("RUNNING".equalsIgnoreCase(yarnApp.getState()) && yarnApp.getAllocatedMB()!=null){
                 if (yarnApp.getAllocatedMB() >= yarnConfig.getAppMemoryThreshold() &&
-                        !yarnConfig.getAppWhiteList().contains(yarnApp.getName().split("\\.bw_instance_")[0])) {
+                        !yarnConfig.getAppWhiteList().contains(yarnApp.getName().split("\\.deer_instance_")[0])) {
                     String trackingUrl = yarnApp.getTrackingUrl();
                     //notice(cluster, yarnApp, trackingUrl, Constant.ErrorType.APP_MEMORY_OVERLIMIT);
                 }
