@@ -1,8 +1,6 @@
 package com.flink.platform.web.common.entity.entity2table;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -68,7 +66,11 @@ public class YarnApp {
      */
     private String applicationType;
     private Date startedTime;
-    private Integer allocatedMB;
+    private Integer allocatedMb;
     private Date refreshTime;
 
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
 }

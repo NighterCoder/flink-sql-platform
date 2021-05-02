@@ -57,9 +57,9 @@ public class ScheduleNode {
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date modifyTime;
+    private Date updateTime;
     private Integer createBy;
-    private Integer modifyBy;
+    private Integer updateBy;
 
 
     /**

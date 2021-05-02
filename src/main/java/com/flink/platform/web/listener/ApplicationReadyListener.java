@@ -129,7 +129,7 @@ public class ApplicationReadyListener implements ApplicationListener<Application
      */
     private void startSchedule() {
         // 找出所有enable为true的定时调度任务
-        List<Schedule> schedules = scheduleService.list(new QueryWrapper<Schedule>().eq("enable", true));
+        List<Schedule> schedules = scheduleService.list(new QueryWrapper<Schedule>().eq("enabled", true));
         Date now = new Date();
         // 更新时间
         schedules.forEach(schedule -> {

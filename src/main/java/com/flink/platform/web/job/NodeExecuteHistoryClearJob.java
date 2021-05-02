@@ -3,6 +3,7 @@ package com.flink.platform.web.job;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
 import com.flink.platform.web.service.NodeExecuteHistoryService;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
@@ -39,11 +40,13 @@ public class NodeExecuteHistoryClearJob implements Job {
         );
         // 去掉仍然在运行的,例如实时任务
         nodeExecuteHistories.removeIf(NodeExecuteHistory::isRunning);
-        nodeExecuteHistoryService.removeByIds(
-                nodeExecuteHistories.stream()
-                        .map(NodeExecuteHistory::getId)
-                        .collect(Collectors.toList())
-        );
+        if(CollectionUtils.isNotEmpty(nodeExecuteHistories)) {
+            nodeExecuteHistoryService.removeByIds(
+                    nodeExecuteHistories.stream()
+                            .map(NodeExecuteHistory::getId)
+                            .collect(Collectors.toList())
+            );
+        }
     }
 
 

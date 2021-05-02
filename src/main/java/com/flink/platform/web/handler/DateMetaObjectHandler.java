@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 /**
+ * 在数据库中不配置create_time和update_time为更新和自动更新
+ *
  * Created by 凌战 on 2021/4/22
  */
 @Slf4j

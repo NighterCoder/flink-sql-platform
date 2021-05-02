@@ -1,6 +1,8 @@
 package com.flink.platform.web.common.entity.entity2table;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.flink.platform.web.common.SystemConstants;
 import lombok.AllArgsConstructor;
@@ -48,13 +50,16 @@ public class Schedule {
     private Date realFireTime;
     private Date needFireTime;
     private Date nextFireTime;
-    private Date creatTime;
     private String createBy;
-    private Date updateTime;
     private String updateBy;
 
 
     private String keyword;
+
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
 
     /**
      * 生成定时表达式

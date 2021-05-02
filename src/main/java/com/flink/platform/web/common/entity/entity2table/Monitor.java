@@ -1,8 +1,6 @@
 package com.flink.platform.web.common.entity.entity2table;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.flink.platform.web.common.SystemConstants;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,6 +43,12 @@ public class Monitor {
     private String dingdingHooks;
     private Boolean enabled;
     private Date realFireTime;
+
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
+
 
     public String generateCron() {
         if (cron != null) {

@@ -119,7 +119,7 @@ public class NodeExecuteHistory {
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date modifyTime;
+    private Date updateTime;
 
 
     public void updateState(String state) {
