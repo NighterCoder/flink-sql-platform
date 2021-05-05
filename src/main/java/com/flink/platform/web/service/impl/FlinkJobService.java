@@ -55,7 +55,6 @@ public class FlinkJobService {
      */
     public String createSession(FlinkSessionCreateParam param) {
         String sessionName = param.getSessionName();
-        String planner = param.getPlanner();
         String executionType = param.getExecutionType();
         Map<String, String> properties = param.getProperties();
         if (properties == null) {

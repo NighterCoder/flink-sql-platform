@@ -162,5 +162,25 @@ public class SchedulerUtils {
         }
     }
 
+    /**
+     * 继续任务执行
+     *
+     * @param name
+     * @param group
+     */
+    public static void resumeJob(Object name,String group){
+        JobKey jobKey = new JobKey(String.valueOf(name),group);
+
+        try{
+            if (scheduler.checkExists(jobKey)){
+                scheduler.resumeJob(jobKey);
+            }
+        }catch (SchedulerException e){
+            LOGGER.warn("Resume job error, name=" + name + " and group=" + group, e);
+        }
+    }
+
+
+
 
 }

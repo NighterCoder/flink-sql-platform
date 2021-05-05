@@ -1,4 +1,4 @@
-package com.flink.platform.web.controller.schedule;
+package com.flink.platform.web.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.flink.platform.web.common.entity.Msg;
@@ -29,7 +29,7 @@ import java.util.*;
  */
 
 @RestController
-@RequestMapping("/schedule")
+@RequestMapping("/api/v1/schedule")
 public class ScheduleController extends BaseController {
 
     @Autowired

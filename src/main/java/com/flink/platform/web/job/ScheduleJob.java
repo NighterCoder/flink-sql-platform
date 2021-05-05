@@ -11,6 +11,7 @@ import com.flink.platform.web.service.ScheduleNodeService;
 import com.flink.platform.web.service.ScheduleService;
 import com.flink.platform.web.service.ScheduleSnapshotService;
 import com.flink.platform.web.utils.SchedulerUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -131,6 +132,47 @@ public class ScheduleJob implements Job {
             );
             scheduleNodeService.generateHistory(scheduleNode, scheduleSnapshot, scheduleInstanceId, generateStatus);
             generateHistory(nodeId, scheduleInstanceId, scheduleSnapshot, generateStatus);
+        }
+    }
+
+
+    /**
+     * 获取需要触发的执行时间
+     * e.g : 每整小时触发一次
+     * startDate: 8:30
+     * nextTime1: 9:00
+     * nextTime2: 10:00
+     * interval : 1hour
+     * cal1: 8:00
+     * cal2: 9:00
+     * cal3: 10:00
+     * cal4: 11:00
+     *
+     * @param cron
+     * @param startDate
+     */
+    public static Date getNeedFireTime(String cron,Date startDate){
+        Date nextFireTime1 = getNextFireTime(cron,startDate);
+        Date nextFireTime2 = getNextFireTime(cron , nextFireTime1);
+        // 计算出两次执行时间间隔
+        int intervals = (int)(nextFireTime2.getTime() - nextFireTime1.getTime());
+        Date cal1= DateUtils.addMilliseconds(nextFireTime1,-intervals);
+        Date cal2 = getNextFireTime(cron,cal1);
+        Date cal3= getNextFireTime(cron ,cal2);
+        if (cal3.equals(nextFireTime1)){
+            return cal2;
+        }else{
+            Date cal4 = getNextFireTime(cron,cal3);
+            while (cal4.compareTo(nextFireTime1) > 0){
+                cal1 = org.apache.commons.lang.time.DateUtils.addMilliseconds(cal1, - intervals);
+                cal2 = getNextFireTime(cron, cal1);
+                cal3 = getNextFireTime(cron, cal2);
+                cal4 = getNextFireTime(cron, cal3);
+            }
+            if (cal4.equals(nextFireTime1)) {
+                return cal3;
+            }
+            return cal2;
         }
     }
 

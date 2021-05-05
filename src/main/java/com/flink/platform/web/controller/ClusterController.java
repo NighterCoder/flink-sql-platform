@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/cluster")
+@RequestMapping("/api/v1/cluster")
 public class ClusterController extends BaseController{
 
     @Autowired
@@ -28,7 +28,6 @@ public class ClusterController extends BaseController{
         clusterService.save(cluster);
         return success();
     }
-
 
 
     @RequestMapping(value = "/list",method = RequestMethod.GET)

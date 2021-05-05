@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -22,14 +23,14 @@ public class Cluster {
     private String fsWebhdfs;
     private String fsUser;
     private String fsDir;
-    private String defaultFileCluster;
+    private Boolean defaultFileCluster;
     private Boolean flinkProxyUserEnabled;
     private String streamBlackNodeList;
     private String batchBlackNodeList;
 
     @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
 }

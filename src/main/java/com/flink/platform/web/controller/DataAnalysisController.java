@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/analysis/")
+@RequestMapping("/api/v1/analysis")
 public class DataAnalysisController {
 
     @Autowired
@@ -34,7 +34,7 @@ public class DataAnalysisController {
      * @param sessionType 支持的计算引擎
      * @param executeType 支持的执行类型
      */
-    @GetMapping("session")
+    @GetMapping("/session")
     public SessionVO getSession(Integer sessionType, Integer executeType) {
         SessionType st = SessionType.fromCode(sessionType);
         ExecuteType et = ExecuteType.fromCode(executeType);
@@ -50,13 +50,13 @@ public class DataAnalysisController {
      *
      * @param dto 前端参数类
      */
-    @PostMapping("submit")
+    @PostMapping("/submit")
     public StatementResult submit(@RequestBody JobSubmitDTO dto) {
         return dataAnalysisService.submit(dto);
     }
 
 
-    @PostMapping("fetch")
+    @PostMapping("/fetch")
     public StatementResult fetch(@RequestBody JobSubmitDTO dto){
         return null;
     }

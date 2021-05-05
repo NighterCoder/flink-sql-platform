@@ -106,7 +106,6 @@ public class SchedulingJobDto extends AbstractPageDto {
                 return "天、小时、分钟不能为空";
             }
         }
-
         return null;
     }
 
