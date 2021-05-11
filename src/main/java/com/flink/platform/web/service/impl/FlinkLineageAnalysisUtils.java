@@ -181,23 +181,20 @@ public class FlinkLineageAnalysisUtils {
      *
      * @param statement SQL语句
      */
-    public static void sqlLineageAnalysis(String statement) {
+    public static void sqlLineageAnalysis(String statement,SqlParser parser) {
 
         if (statement != null && !statement.isEmpty()) {
             try {
 
-
-                SqlParser parser = SqlParser.create(statement, SqlParser.configBuilder()
-                        // 使用FlinkSqlParse工厂
-                        .setParserFactory(FlinkSqlParserImpl.FACTORY)
-                        .setQuoting(BACK_TICK)
-                        .setUnquotedCasing(Casing.TO_LOWER)   //字段名统一转化为小写
-                        .setQuotedCasing(Casing.UNCHANGED)
-                        .setConformance(FlinkSqlConformance.DEFAULT)
-                        .build()
-                );
-
-
+//                SqlParser parser = SqlParser.create(statement, SqlParser.configBuilder()
+//                        // 使用FlinkSqlParse工厂
+//                        .setParserFactory(FlinkSqlParserImpl.FACTORY)
+//                        .setQuoting(BACK_TICK)
+//                        .setUnquotedCasing(Casing.TO_LOWER)   //字段名统一转化为小写
+//                        .setQuotedCasing(Casing.UNCHANGED)
+//                        .setConformance(FlinkSqlConformance.DEFAULT)
+//                        .build()
+//                );
 
                 List<SqlNode> sqlNodeList = parser.parseStmtList().getList();
 

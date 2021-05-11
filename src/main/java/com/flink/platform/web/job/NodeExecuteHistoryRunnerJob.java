@@ -1,10 +1,12 @@
 package com.flink.platform.web.job;
 
+import com.alibaba.fastjson.JSONObject;
 import com.flink.platform.core.config.entries.ExecutionEntry;
 import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
+import com.flink.platform.web.common.entity.jar.JarJobConf;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.service.ClusterService;
 import com.flink.platform.web.service.NodeExecuteHistoryService;
@@ -140,6 +142,23 @@ public class NodeExecuteHistoryRunnerJob extends AbstractRetryableJob implements
             dealInterrupted();
         }
     }
+
+
+    /**
+     * 提交执行Flink Stream Jar任务
+     * @param content Jar包执行所需要的信息
+     * @param nodeExecuteHistory 节点执行实例
+     */
+    private void runFlinkStreamJar(String content,NodeExecuteHistory nodeExecuteHistory){
+        JarJobConf jarJobConf = JSONObject.parseObject(content,JarJobConf.class);
+
+
+
+    }
+
+
+
+
 
 
     /**

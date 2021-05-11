@@ -93,7 +93,7 @@ public class Session {
             // Optional<SqlCommandParser.SqlCommandCall> callOpt=SqlCommandParser.parse(statement,isBlinkPlanner);
 
             Optional<SqlCommandParserV2.SqlCommandCall> callOpt = sqlCommandParser.parse(statement);
-
+            // todo 在这里可以做sql的血缘分析
 
             if (!callOpt.isPresent()){
                 LOG.error("Session: {}, Unknown statement: {}", sessionId, statement);

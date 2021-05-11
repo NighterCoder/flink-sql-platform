@@ -258,6 +258,9 @@ public class Flink112Shims extends FlinkShims {
     List<Operation> operations;
     try {
       operations = sqlParser.parse(stmt);
+
+
+
     } catch (Throwable e) {
       throw new Exception("Invalidate SQL statement.", e);
     }

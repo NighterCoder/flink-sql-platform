@@ -25,6 +25,11 @@ public interface SystemConstants {
     String SINK_TABLE = "sink.table";
 
 
+    String FLINK_ENV_PARALLELISM = "flink.env.parallelism";
+    String SAVEPOINT_PATH_KEY = "savePointPath";
+    String ALLOW_NON_RESTORED_STATE_KEY = "allowNonRestoredState";
+
+
     /**
      * 调度任务可视化时间维度
      */
