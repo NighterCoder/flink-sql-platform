@@ -1,20 +1,24 @@
 package com.flink.platform.web.service.impl;
 
 import com.flink.platform.web.common.SystemConstants;
-import com.flink.platform.web.common.entity.lineage.LineageVO;
+import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
+import com.flink.platform.web.common.entity.lineage.ColumnVO;
+import com.flink.platform.web.common.entity.lineage.TableLineageInputOutput;
 import com.flink.platform.web.exception.FlinkSqlParseException;
 import com.flink.platform.web.exception.StreamNodeParseException;
-import org.apache.calcite.avatica.util.Casing;
-import org.apache.calcite.sql.SqlNode;
+import com.flink.platform.web.manager.SqlParserUtils;
+import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableOption;
+import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.sql.parser.hive.ddl.SqlCreateHiveTable;
-import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
-import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
@@ -26,6 +30,7 @@ import org.apache.flink.streaming.api.operators.StreamSource;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumerBase;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducerBase;
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicsDescriptor;
+import org.apache.flink.table.api.SqlDialect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +38,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.apache.calcite.avatica.util.Quoting.BACK_TICK;
 
 /**
  * 目前支持对
@@ -156,13 +159,9 @@ public class FlinkLineageAnalysisUtils {
             } catch (Exception e) {
                 throw new StreamNodeParseException("解析StreamNode获取SinkFunction构造函数参数错误", e);
             }
-
-
         } else {
             throw new StreamNodeParseException("当前节点算子既不是Source也不是Sink,暂不解析");
         }
-
-
     }
 
 
@@ -175,109 +174,118 @@ public class FlinkLineageAnalysisUtils {
      * todo 5.CreateView 对应 SqlCreateView // CreateViewAsSelect
      * todo 6.AlterView 对应 SqlAlterView
      *
-     *
-     * Flink SQL目前可以通过 SET table.sql-dialect=default/hive 来动态切换语义;
-     *
-     *
-     * @param statement SQL语句
+     * @param stmt
+     * @param sqlDialect
+     * @param nodeExecuteHistory
+     * @throws SqlParseException
      */
-    public static void sqlLineageAnalysis(String statement,SqlParser parser) {
+    public static void sqlLineageAnalysis(String stmt, SqlDialect sqlDialect, NodeExecuteHistory nodeExecuteHistory) throws SqlParseException {
 
-        if (statement != null && !statement.isEmpty()) {
-            try {
+        SqlParser parser;
 
-//                SqlParser parser = SqlParser.create(statement, SqlParser.configBuilder()
-//                        // 使用FlinkSqlParse工厂
-//                        .setParserFactory(FlinkSqlParserImpl.FACTORY)
-//                        .setQuoting(BACK_TICK)
-//                        .setUnquotedCasing(Casing.TO_LOWER)   //字段名统一转化为小写
-//                        .setQuotedCasing(Casing.UNCHANGED)
-//                        .setConformance(FlinkSqlConformance.DEFAULT)
-//                        .build()
-//                );
+        switch (sqlDialect) {
+            case HIVE:
+                parser = SqlParserUtils.getFlinkHiveSqlParser(stmt);
+                break;
+            case DEFAULT:
+                parser = SqlParserUtils.getFlinkSqlParser(stmt);
+                break;
+            default:
+                throw new FlinkSqlParseException("当前Flink语义不明,无法解析血缘关系!");
+        }
+        // 这里是单条SQL语句
+        SqlNode sqlNode = parser.parseStmt();
+        if (sqlNode instanceof SqlCreateTable) {
+            // !!! 在建表时需要加上库名
+            String tableName = ((SqlCreateTable) sqlNode).getTableName().toString();
+            // 构建 Table 实体类
+            TableLineageInputOutput tableLineageInputOutput = new TableLineageInputOutput();
+            tableLineageInputOutput.setDb(tableName.split(".").length > 1 ? tableName.split(".")[0] : null);
+            tableLineageInputOutput.setTable(tableName.split(".").length > 1 ? tableName.split(".")[1] : tableName);
+            tableLineageInputOutput.setOwnerId(nodeExecuteHistory.getCreateBy());
 
-                List<SqlNode> sqlNodeList = parser.parseStmtList().getList();
-
-                List<LineageVO> input = new ArrayList<>();
-                List<LineageVO> output = new ArrayList<>();
-
-
-
-                // CREATE,INSERT
-                if (sqlNodeList != null && !sqlNodeList.isEmpty()) {
-                    for (SqlNode sqlNode : sqlNodeList) {
-                        // todo 补充其他SqlNode信息
-
-                        // todo 1.CreateTable 类型一般是 SqlCreateHiveTable 或者 带有with信息
-                        if (sqlNode instanceof SqlCreateTable) {
-                            // 这里解析的是output的表名
-                            String tableName = ((SqlCreateTable) sqlNode).getTableName().toString();
-                            // 当前表的字段列表
-                            // SqlNode -> SqlTableColumn -> (SqlRegularColumn,SqlComputedColumn)
-                            List<Map<String,String>> columnInfo =  ((SqlCreateTable) sqlNode).getColumnList().getList().stream().map(s -> {
-
-                                Map<String,String> columnMap = new HashMap<>();
-
-                                if (s instanceof SqlTableColumn.SqlRegularColumn) {
-                                    String columnName = ((SqlTableColumn.SqlRegularColumn) s).getName().toString();
-                                    String columnType = ((SqlTableColumn.SqlRegularColumn) s).getType().getTypeNameSpec().getTypeName().toString();
-                                    columnMap.put(columnName,columnType);
-
-                                } else if (s instanceof SqlTableColumn.SqlComputedColumn) {
-                                    String columnName = ((SqlTableColumn.SqlComputedColumn) s).getName().toString();
-                                    String exprStr = ((SqlTableColumn.SqlComputedColumn) s).getExpr().toString();
-                                    columnMap.put(columnName,exprStr);
-
-                                } else {
-                                    throw new FlinkSqlParseException("当前CREATE SQL解析有误,请联系开发人员");
-                                }
-
-                                return columnMap;
-                            }).collect(Collectors.toList());
-
-
-                            // todo 根据是普通的CreateTable或者SqlCreateHiveTable
-                            if (sqlNode instanceof SqlCreateHiveTable){
-                                //((SqlCreateHiveTable)sqlNode)
-
-
-                            }else{
-
-
-                            }
-
-
-
-
-
-
-                            // 当前表创建来源信息,propertyList,这里不解析,要求此类表在元数据功能模块下创建
-                            // 分区键 partitionKey
-                            LineageVO lineageVO = new LineageVO(tableName,columnInfo);
-                            input.add(lineageVO);
-
-                        } else if (sqlNode instanceof SqlCreateView) {
-
-                            String viewName = ((SqlCreateView) sqlNode).getViewName().toString();
-                           /* List<Map<String,String>> columnInfo = ((SqlCreateView) sqlNode).getFieldList().getList().stream().map(s -> {
-
-                                Map<String,String> columnMap = new HashMap<>();
-
-                                // if ()
-
-
-
-                            });*/
-
-
-                        }
-
-
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (sqlNode instanceof SqlCreateHiveTable) {
+                tableLineageInputOutput.setDbType("hive");
+            } else {
+                tableLineageInputOutput.setDbType("normal");
             }
+
+            List<SqlNode> propInfo = ((SqlCreateTable) sqlNode).getPropertyList().getList();
+            Map<String, String> propsMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(propInfo)) {
+                for (SqlNode node : propInfo) {
+                    propsMap.put(((SqlTableOption) node).getKeyString(),
+                            ((SqlTableOption) node).getValueString()
+                    );
+                }
+            }
+            tableLineageInputOutput.setProps(propsMap);
+
+            // 当前表的字段列表
+            // SqlNode -> SqlTableColumn -> (SqlRegularColumn,SqlComputedColumn)
+            List<ColumnVO> columnInfo = ((SqlCreateTable) sqlNode).getColumnList().getList().stream().map(s -> {
+                ColumnVO columnVO = new ColumnVO();
+                columnVO.setTable(tableLineageInputOutput);
+                if (s instanceof SqlTableColumn.SqlRegularColumn) {
+                    String columnName = ((SqlTableColumn.SqlRegularColumn) s).getName().toString();
+                    String columnType = ((SqlTableColumn.SqlRegularColumn) s).getType().getTypeNameSpec().getTypeName().toString();
+                    columnVO.setCol(columnName);
+                    columnVO.setFullCol(tableName + "." + columnName);
+                    columnVO.setType(columnType);
+                } else if (s instanceof SqlTableColumn.SqlComputedColumn) {
+                    String columnName = ((SqlTableColumn.SqlComputedColumn) s).getName().toString();
+                    String exprStr = ((SqlTableColumn.SqlComputedColumn) s).getExpr().toString();
+                    columnVO.setCol(columnName);
+                    columnVO.setFullCol(tableName + "." + columnName);
+                    columnVO.setExprStr(exprStr);
+                } else {
+                    throw new FlinkSqlParseException("当前CREATE SQL解析有误,请联系开发人员");
+                }
+                return columnVO;
+            }).collect(Collectors.toList());
+
+            // todo 封装
+        } else if (sqlNode instanceof SqlCreateView) {
+
+            // view 信息
+            String viewName = ((SqlCreateView) sqlNode).getViewName().toString();
+            List<String> columns = ((SqlCreateView) sqlNode).getFieldList().getList()
+                    .stream()
+                    .map(SqlNode::toString)
+                    .collect(Collectors.toList());
+
+            // as后面的信息
+            SqlSelect sqlSelect = (SqlSelect) ((SqlCreateView) sqlNode).getQuery();
+            String fromTable = sqlSelect.getFrom().toString();
+            List<String> fromTableColumns = sqlSelect.getSelectList().getList()
+                    .stream()
+                    .map(SqlNode::toString)
+                    .collect(Collectors.toList());
+
+            //todo 封装
+        } else if (sqlNode instanceof SqlInsert) {
+            // insert 后面可以有很多写法
+            String toTable = ((SqlInsert) (sqlNode)).getTargetTable().toString();
+            // todo keywords
+            SqlNode source = ((SqlInsert) (sqlNode)).getSource();
+            // 1. insert + with select
+            if (source instanceof SqlWith) {
+                SqlNodeList withList = ((SqlWith) source).withList;
+                withList.getList().stream().map(s -> {
+                    String withName = ((SqlWithItem) s).name.toString();
+                    SqlSelect sqlSelect = (SqlSelect) ((SqlWithItem) s).query;
+                    String fromTable = sqlSelect.getFrom().toString();
+                    List<String> fromTableColumns = sqlSelect.getSelectList().getList()
+                            .stream()
+                            .map(SqlNode::toString)
+                            .collect(Collectors.toList());
+
+
+                });
+
+            }
+
+
         }
 
 

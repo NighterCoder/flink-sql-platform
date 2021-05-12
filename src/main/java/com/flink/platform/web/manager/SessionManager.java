@@ -1,5 +1,6 @@
 package com.flink.platform.web.manager;
 
+import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.enums.SessionState;
 
@@ -18,5 +19,6 @@ public interface SessionManager {
 
     StatementResult fetch(String statement , String sessionId);
 
+    Session getSession(String sessionId);
 
 }

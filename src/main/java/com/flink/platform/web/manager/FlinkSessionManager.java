@@ -126,6 +126,14 @@ public class FlinkSessionManager implements SessionManager {
         return null;
     }
 
+    @Override
+    public Session getSession(String sessionId) {
+        if (this.sessions.containsKey(sessionId)){
+            return this.sessions.get(sessionId);
+        }
+        return null;
+    }
+
     /**
      * 获取任务执行结果
      *

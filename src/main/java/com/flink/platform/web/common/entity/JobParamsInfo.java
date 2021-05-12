@@ -9,9 +9,8 @@ import java.util.Properties;
 /**
  * Created by 凌战 on 2021/5/11
  */
-@Data
-@Builder
-@ToString
+
+
 public class JobParamsInfo {
 
     /**
@@ -96,5 +95,63 @@ public class JobParamsInfo {
         this.dirtyProperties = dirtyProperties;
     }
 
+    public String getMode() {
+        return mode;
+    }
 
+    public String getUserJarPath() {
+        return userJarPath;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getQueue() {
+        return queue;
+    }
+
+    public String getLocalPluginRoot() {
+        return localPluginRoot;
+    }
+
+    public String getFlinkConfDir() {
+        return flinkConfDir;
+    }
+
+    public String getFlinkJarPath() {
+        return flinkJarPath;
+    }
+
+    public String getYarnConfDir() {
+        return yarnConfDir;
+    }
+
+    public String getPluginLoadMode() {
+        return pluginLoadMode;
+    }
+
+    public String getUdfJar() {
+        return udfJar;
+    }
+
+    public String[] getExecArgs() {
+        return execArgs;
+    }
+
+    public Properties getConfProperties() {
+        return confProperties;
+    }
+
+    public Properties getYarnSessionConfProperties() {
+        return yarnSessionConfProperties;
+    }
+
+    public String getAddShipFile() {
+        return addShipFile;
+    }
+
+    public Properties getDirtyProperties() {
+        return dirtyProperties;
+    }
 }

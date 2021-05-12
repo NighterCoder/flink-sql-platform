@@ -254,12 +254,10 @@ public class Flink112Shims extends FlinkShims {
 
   }
 
-  private SqlCommandCall parseBySqlParser(Parser sqlParser, String stmt) throws Exception {
+  public static SqlCommandCall parseBySqlParser(Parser sqlParser, String stmt) throws Exception {
     List<Operation> operations;
     try {
       operations = sqlParser.parse(stmt);
-
-
 
     } catch (Throwable e) {
       throw new Exception("Invalidate SQL statement.", e);
@@ -337,7 +335,7 @@ public class Flink112Shims extends FlinkShims {
     return new SqlCommandCall(cmd, operands);
   }
 
-  private static Optional<SqlCommandCall> parseByRegexMatching(String stmt) {
+  public static Optional<SqlCommandCall> parseByRegexMatching(String stmt) {
     // parse statement via regex matching
     for (SqlCommand cmd : SqlCommand.values()) {
       if (cmd.pattern != null) {

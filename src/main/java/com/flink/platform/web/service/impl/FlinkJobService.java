@@ -2,13 +2,16 @@ package com.flink.platform.web.service.impl;
 
 import com.flink.platform.core.exception.SqlPlatformException;
 import com.flink.platform.core.executor.PlatformYarnJobClusterExecutor;
+import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.StatementResult;
+import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
 import com.flink.platform.web.common.entity.jar.JarJobConf;
 import com.flink.platform.web.common.enums.SessionState;
 import com.flink.platform.web.common.param.FlinkSessionCreateParam;
 import com.flink.platform.web.manager.FlinkSessionManager;
 import com.flink.platform.web.manager.HDFSManager;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.client.cli.CliFrontend;
@@ -19,6 +22,8 @@ import org.apache.flink.client.program.PackagedProgramUtils;
 import org.apache.flink.client.program.ProgramInvocationException;
 import org.apache.flink.configuration.*;
 import org.apache.flink.streaming.api.graph.StreamGraph;
+import org.apache.flink.table.api.SqlDialect;
+import org.apache.flink.table.api.internal.TableEnvironmentInternal;
 import org.apache.flink.util.TemporaryClassLoaderContext;
 import org.apache.flink.yarn.YarnClusterClientFactory;
 import org.apache.flink.yarn.YarnClusterDescriptor;
@@ -31,13 +36,19 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
+/**
+ * Flink定时任务执行Service类
+ */
 @Service
 public class FlinkJobService {
 
@@ -83,13 +94,34 @@ public class FlinkJobService {
      *
      * @param sql       执行SQL
      * @param sessionId sessionId
+     *
      * @return StatementResult
      */
-    public StatementResult submit(String sql, String sessionId) {
+    public StatementResult submit(String sql, String sessionId,NodeExecuteHistory nodeExecuteHistory) {
         StatementResult result = new StatementResult();
         result.setStatement(sql);
         // jobId is not null only after job is submitted
-        return sessionManager.submit(sql, sessionId);
+
+        List<String> list = Arrays.stream(sql.split(";"))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+
+        int size = list.size();
+        for (int i = 0; i < size; i++) {
+
+            // todo 为什么选择在这里进行血缘解析???? 因为语义的变化可能会在sql中以set table.sql-dialect 来动态变化,只能执行一句来解析一句
+            // 每执行一个SQL语句之前先进行血缘分析
+            // 1.先获取当前语句执行的Session,从而获取TableEnv
+            Session session = sessionManager.getSession(sessionId);
+            SqlDialect sqlDialect = session.getContext().getExecutionContext().getTableEnvironment().getConfig().getSqlDialect();
+
+            // 只返回最后一个语句的执行结果
+            if (i == size - 1) {
+                return sessionManager.submit(list.get(i), sessionId);
+            }
+            sessionManager.submit(list.get(i), sessionId);
+        }
+        return new StatementResult();
     }
 
     /**
@@ -208,8 +240,6 @@ public class FlinkJobService {
     public void submitUdfJar() {
 
     }
-
-
 
 
     private <R> R wrapClassLoader(ClassLoader classLoader, Supplier<R> supplier) {

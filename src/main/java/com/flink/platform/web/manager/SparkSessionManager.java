@@ -1,6 +1,7 @@
 package com.flink.platform.web.manager;
 
 import com.alibaba.fastjson.JSONObject;
+import com.flink.platform.core.rest.session.Session;
 import com.flink.platform.web.common.entity.StatementResult;
 import com.flink.platform.web.common.entity.spark.SparkSessionDTO;
 import com.flink.platform.web.common.enums.SessionState;
@@ -36,7 +37,7 @@ public class SparkSessionManager implements SessionManager {
     private static final String STATUS_URL_FORMAT = "%s/sessions/%s/state";
     private static final String MASTER_URL_FORMAT = "%s/sessions/%s";
     private static final String DELETE_URL_FORMAT = "%s/sessions/%s";
-
+    private static final String GET_URL_FORMAT = "%s/sessions/%s";
 
     @Override
     public String createSession(String sessionName, String executionType) {
@@ -71,6 +72,11 @@ public class SparkSessionManager implements SessionManager {
 
     @Override
     public StatementResult fetch(String statement, String sessionId) {
+        return null;
+    }
+
+    @Override
+    public Session getSession(String sessionId) {
         return null;
     }
 

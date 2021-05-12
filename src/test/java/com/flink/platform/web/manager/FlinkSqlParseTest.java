@@ -31,15 +31,25 @@ public class FlinkSqlParseTest {
         List<String> sqlList = new ArrayList<>();
         if (sql != null && !sql.isEmpty()) {
             try {
+//                SqlParser parser = SqlParser.create(sql, SqlParser.configBuilder()
+//                        //.setParserFactory(FlinkSqlParserImpl.FACTORY) // 改成Hive
+//                        .setParserFactory(FlinkHiveSqlParserImpl.FACTORY)
+//                        .setQuoting(BACK_TICK)
+//                        .setUnquotedCasing(Casing.TO_LOWER)   //字段名统一转化为小写
+//                        .setQuotedCasing(Casing.UNCHANGED)
+//                        .setConformance(FlinkSqlConformance.HIVE) // 可以改成hive语义
+//                        .build()
+//                );
+
                 SqlParser parser = SqlParser.create(sql, SqlParser.configBuilder()
-                        .setParserFactory(FlinkSqlParserImpl.FACTORY) // 改成Hive
-                        .setParserFactory(FlinkHiveSqlParserImpl.FACTORY)
+                        // 使用FlinkSqlParse工厂
+                        .setParserFactory(FlinkSqlParserImpl.FACTORY)
                         .setQuoting(BACK_TICK)
                         .setUnquotedCasing(Casing.TO_LOWER)   //字段名统一转化为小写
                         .setQuotedCasing(Casing.UNCHANGED)
-                        .setConformance(FlinkSqlConformance.HIVE) // 可以改成hive语义
-                        .build()
-                );
+                        .setConformance(FlinkSqlConformance.DEFAULT)
+                        .build());
+
                 List<SqlNode> sqlNodeList = parser.parseStmtList().getList();
                 if (sqlNodeList != null && !sqlNodeList.isEmpty()) {
                     for (SqlNode sqlNode : sqlNodeList) {
@@ -88,7 +98,7 @@ public class FlinkSqlParseTest {
     @Test
     public void testFlinkSqlParse() {
 
-        String sql = "CREATE TABLE T(\n"
+        String sql = "CREATE TABLE db.T(\n"
                 + "  a int,\n"
                 + "  b varchar(20),\n"
                 + "  c as my_udf(b),\n"
@@ -99,14 +109,14 @@ public class FlinkSqlParseTest {
 
                 + " WITH t as (select a,b,c from T) select a from t ";
 
-        String sql1 = "WITH t as (select complicated from table) select complicated from t";
+        String sql1 = "INSERT OVERWRITE other WITH t as (select a,b,c from T) select a from t";
 
         String sql2 = "SELECT u.name,sum(o.amount) AS total\n" +
                 "         FROM orders o\n" +
                 "         INNER JOIN users u ON o.uid = u.id\n" +
                 "         WHERE u.age < 27\n" +
                 "         GROUP BY u.name\n";
-        String sql3 = "CREATE  VIEW   MyTable   AS   SELECT 1+1 FROM y";
+        String sql3 = "CREATE  VIEW   MyTable (a,b)  AS   SELECT c,d FROM y";
 
         String sql4 = "INSERT OVERWRITE other SELECT a FROM t";
 
@@ -128,7 +138,7 @@ public class FlinkSqlParseTest {
 
 
 
-        List<String> list = parseFlinkSql(sql);
+        List<String> list = parseFlinkSql(sql1);
         log.info(list.size() + "");
     }
 

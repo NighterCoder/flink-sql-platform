@@ -125,7 +125,9 @@ public class NodeExecuteHistoryRunnerJob extends AbstractRetryableJob implements
         }
 
         sessionId = flinkJobService.createSession(param);
-        StatementResult result = flinkJobService.submit(content, sessionId);
+
+        StatementResult result = flinkJobService.submit(content, sessionId,nodeExecuteHistory);
+
         if (!interrupted) {
             if (result != null) {
                 nodeExecuteHistory.updateState(SystemConstants.JobState.SUBMITTED);

@@ -29,4 +29,9 @@ public class ColumnVO {
      */
     private String type;
 
+    /**
+     * 计算型字段,type为空
+     */
+    private String exprStr;
+
 }
