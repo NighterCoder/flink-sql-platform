@@ -1,6 +1,8 @@
 package com.flink.platform.web.manager;
 
+import com.flink.platform.web.common.entity.lineage.SelectRel;
 import com.flink.platform.web.exception.FlinkSqlParseException;
+import com.flink.platform.web.service.impl.FlinkLineageAnalysisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.sql.SqlNode;
@@ -51,7 +53,14 @@ public class FlinkSqlParseTest {
                         .build());
 
                 List<SqlNode> sqlNodeList = parser.parseStmtList().getList();
-                if (sqlNodeList != null && !sqlNodeList.isEmpty()) {
+
+
+                SelectRel selectRel = new SelectRel();
+                FlinkLineageAnalysisUtils.parseSelectNode(sqlNodeList.get(0),selectRel);
+                System.out.println(selectRel);
+
+
+ /*               if (sqlNodeList != null && !sqlNodeList.isEmpty()) {
                     for (SqlNode sqlNode : sqlNodeList) {
                         if (sqlNode instanceof SqlCreateTable) {
                             // 创建的表名
@@ -86,7 +95,7 @@ public class FlinkSqlParseTest {
 
                         }
                     }
-                }
+                }*/
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -109,7 +118,7 @@ public class FlinkSqlParseTest {
 
                 + " WITH t as (select a,b,c from T) select a from t ";
 
-        String sql1 = "INSERT OVERWRITE other WITH t as (select a,b,c from T) select a from t";
+        String sql1 = "INSERT OVERWRITE other WITH t as (select a,b,c from T),v as (select d,e from V) select t.a,t.b,t.c,d.e from t join v on t.a = v.e ";
 
         String sql2 = "SELECT u.name,sum(o.amount) AS total\n" +
                 "         FROM orders o\n" +
@@ -135,10 +144,9 @@ public class FlinkSqlParseTest {
                 "  'partition.time-extractor.timestamp-pattern'='$dt $h:$m:00'\n" +
                 ")\n";
 
+        String sql7 = " select t.a,t.b,t.c,v.e from (select a,b,c from T ) as t join v on t.a = v.e ";
 
-
-
-        List<String> list = parseFlinkSql(sql1);
+        List<String> list = parseFlinkSql(sql7);
         log.info(list.size() + "");
     }
 

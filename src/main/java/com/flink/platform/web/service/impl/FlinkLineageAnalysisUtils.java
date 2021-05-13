@@ -3,7 +3,9 @@ package com.flink.platform.web.service.impl;
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
 import com.flink.platform.web.common.entity.lineage.ColumnVO;
+import com.flink.platform.web.common.entity.lineage.SelectRel;
 import com.flink.platform.web.common.entity.lineage.TableLineageInputOutput;
+import com.flink.platform.web.common.entity.lineage.WithSelectRel;
 import com.flink.platform.web.exception.FlinkSqlParseException;
 import com.flink.platform.web.exception.StreamNodeParseException;
 import com.flink.platform.web.manager.SqlParserUtils;
@@ -180,9 +182,7 @@ public class FlinkLineageAnalysisUtils {
      * @throws SqlParseException
      */
     public static void sqlLineageAnalysis(String stmt, SqlDialect sqlDialect, NodeExecuteHistory nodeExecuteHistory) throws SqlParseException {
-
         SqlParser parser;
-
         switch (sqlDialect) {
             case HIVE:
                 parser = SqlParserUtils.getFlinkHiveSqlParser(stmt);
@@ -256,22 +256,28 @@ public class FlinkLineageAnalysisUtils {
 
             // as后面的信息
             SqlSelect sqlSelect = (SqlSelect) ((SqlCreateView) sqlNode).getQuery();
-            String fromTable = sqlSelect.getFrom().toString();
-            List<String> fromTableColumns = sqlSelect.getSelectList().getList()
-                    .stream()
-                    .map(SqlNode::toString)
-                    .collect(Collectors.toList());
+            SelectRel selectRel = new SelectRel();
+            parseSelectNode(sqlSelect, selectRel);
 
             //todo 封装
         } else if (sqlNode instanceof SqlInsert) {
             // insert 后面可以有很多写法
-            String toTable = ((SqlInsert) (sqlNode)).getTargetTable().toString();
-            // todo keywords
+            String targetTable = ((SqlInsert) sqlNode).getTargetTable().toString();
+            SqlNodeList targetColumnList = ((SqlInsert) sqlNode).getTargetColumnList();
+            if (targetColumnList != null) {
+                List<String> targetColumns = targetColumnList.getList()
+                        .stream()
+                        .map(SqlNode::toString)
+                        .collect(Collectors.toList());
+            }
+
             SqlNode source = ((SqlInsert) (sqlNode)).getSource();
             // 1. insert + with select
+            // 例如 "INSERT OVERWRITE other WITH t as (select a,b,c from T) select a from t"
             if (source instanceof SqlWith) {
+                // with列表,里面相当于定义了1或者多个子表
                 SqlNodeList withList = ((SqlWith) source).withList;
-                withList.getList().stream().map(s -> {
+                List<WithSelectRel> withSelectRels = withList.getList().stream().map(s -> {
                     String withName = ((SqlWithItem) s).name.toString();
                     SqlSelect sqlSelect = (SqlSelect) ((SqlWithItem) s).query;
                     String fromTable = sqlSelect.getFrom().toString();
@@ -279,15 +285,94 @@ public class FlinkLineageAnalysisUtils {
                             .stream()
                             .map(SqlNode::toString)
                             .collect(Collectors.toList());
+                    WithSelectRel withSelectRel = new WithSelectRel();
+                    withSelectRel.setWithName(withName);
+                    withSelectRel.setFromTable(fromTable);
+                    withSelectRel.setFromTableColumns(fromTableColumns);
+                    return withSelectRel;
+                }).collect(Collectors.toList());
 
+                // body主体,insert的最终内容
+                SqlSelect sqlSelect = (SqlSelect) ((SqlWith) source).body;
+                SelectRel selectRel = new SelectRel();
+                parseSelectNode(sqlSelect, selectRel);
 
-                });
 
             }
-
-
         }
+    }
 
+
+    /**
+     * 解析 select 语法
+     *
+     * @param sqlNode
+     */
+    public static void parseSelectNode(SqlNode sqlNode, SelectRel selectRel) {
+        SqlKind sqlKind = sqlNode.getKind();
+        switch (sqlKind) {
+            case SELECT:
+                SqlNode sqlFrom = ((SqlSelect) sqlNode).getFrom();
+                List<String> selectColumns = ((SqlSelect) sqlNode).getSelectList().getList().stream()
+                        .map(SqlNode::toString)
+                        .collect(Collectors.toList());
+
+                selectRel.setColumns(selectColumns);
+                if (sqlFrom.getKind() == SqlKind.IDENTIFIER) {
+                    selectRel.setFromTables(sqlFrom.toString());
+                } else {
+                    parseSelectNode(sqlFrom, selectRel);
+                }
+                break;
+            case JOIN:
+                SqlNode leftNode = ((SqlJoin) sqlNode).getLeft();
+                SqlNode rightNode = ((SqlJoin) sqlNode).getRight();
+                SelectRel leftChildSelect = new SelectRel();
+                SelectRel rightChildSelect = new SelectRel();
+                selectRel.setChildSelect(Arrays.asList(leftChildSelect, rightChildSelect));
+                if (leftNode.getKind() == SqlKind.IDENTIFIER) {
+                    leftChildSelect.setFromTables(leftNode.toString());
+                } else {
+                    parseSelectNode(leftNode, leftChildSelect);
+                }
+                if (rightNode.getKind() == SqlKind.IDENTIFIER) {
+                    rightChildSelect.setFromTables(rightNode.toString());
+                } else {
+                    parseSelectNode(rightNode, rightChildSelect);
+                }
+                break;
+            case AS:
+                SqlNode identifierNode = ((SqlBasicCall) sqlNode).getOperands()[0];  // AS 前面的表达式
+                selectRel.setFromTables(((SqlBasicCall) sqlNode).getOperands()[1].toString()); // AS 后面的表名
+                SelectRel asChildSelect = new SelectRel();
+                selectRel.setChildSelect(Collections.singletonList(asChildSelect));
+                if (identifierNode.getKind() != SqlKind.IDENTIFIER) {
+                    parseSelectNode(identifierNode, asChildSelect);
+                } else {
+                    asChildSelect.setFromTables(identifierNode.toString());
+                }
+                break;
+            case UNION:
+                SqlNode unionLeft = ((SqlBasicCall) sqlNode).getOperands()[0];
+                SqlNode unionRight = ((SqlBasicCall) sqlNode).getOperands()[1];
+                SelectRel unionLeftChildSelect = new SelectRel();
+                SelectRel unionRightChildSelect = new SelectRel();
+                selectRel.setChildSelect(Arrays.asList(unionLeftChildSelect, unionRightChildSelect));
+
+                if (unionLeft.getKind() == SqlKind.IDENTIFIER) {
+                    unionLeftChildSelect.setFromTables(unionLeft.toString());
+                } else {
+                    parseSelectNode(unionLeft, unionLeftChildSelect);
+                }
+                if (unionRight.getKind() == SqlKind.IDENTIFIER) {
+                    unionRightChildSelect.setFromTables(unionRight.toString());
+                } else {
+                    parseSelectNode(unionRight, unionRightChildSelect);
+                }
+                break;
+            default:
+                break;
+        }
 
     }
 

@@ -8,16 +8,16 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * Created by 凌战 on 2021/5/12
+ * Created by 凌战 on 2021/5/13
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class WithSelectRel {
+public class SelectRel {
 
-    private String withName;
-    private String fromTable;
-    private List<String> fromTableColumns;
+    private List<String> columns;
+    private String fromTables;
+    private List<SelectRel> childSelect;
 
 }
