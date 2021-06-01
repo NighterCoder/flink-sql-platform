@@ -21,7 +21,6 @@ public class CreateViewRel {
     private String view;
     private List<ColumnVO> columns;
 
-    private String fromTable;
-    private List<ColumnVO> fromTableColumns;
+    private SelectRel selectRel;
 
 }

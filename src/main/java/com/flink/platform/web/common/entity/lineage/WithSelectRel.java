@@ -1,11 +1,6 @@
 package com.flink.platform.web.common.entity.lineage;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.List;
+import lombok.*;
 
 /**
  * Created by 凌战 on 2021/5/12
@@ -14,10 +9,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class WithSelectRel {
 
     private String withName;
-    private String fromTable;
-    private List<String> fromTableColumns;
+    private SelectRel selectRel;
 
 }

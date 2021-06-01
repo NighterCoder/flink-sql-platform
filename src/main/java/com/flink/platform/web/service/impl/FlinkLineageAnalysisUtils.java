@@ -2,10 +2,7 @@ package com.flink.platform.web.service.impl;
 
 import com.flink.platform.web.common.SystemConstants;
 import com.flink.platform.web.common.entity.entity2table.NodeExecuteHistory;
-import com.flink.platform.web.common.entity.lineage.ColumnVO;
-import com.flink.platform.web.common.entity.lineage.SelectRel;
-import com.flink.platform.web.common.entity.lineage.TableLineageInputOutput;
-import com.flink.platform.web.common.entity.lineage.WithSelectRel;
+import com.flink.platform.web.common.entity.lineage.*;
 import com.flink.platform.web.exception.FlinkSqlParseException;
 import com.flink.platform.web.exception.StreamNodeParseException;
 import com.flink.platform.web.manager.SqlParserUtils;
@@ -223,7 +220,7 @@ public class FlinkLineageAnalysisUtils {
 
             // 当前表的字段列表
             // SqlNode -> SqlTableColumn -> (SqlRegularColumn,SqlComputedColumn)
-            List<ColumnVO> columnInfo = ((SqlCreateTable) sqlNode).getColumnList().getList().stream().map(s -> {
+            List<ColumnVO> columnInfos = ((SqlCreateTable) sqlNode).getColumnList().getList().stream().map(s -> {
                 ColumnVO columnVO = new ColumnVO();
                 columnVO.setTable(tableLineageInputOutput);
                 if (s instanceof SqlTableColumn.SqlRegularColumn) {
@@ -244,7 +241,16 @@ public class FlinkLineageAnalysisUtils {
                 return columnVO;
             }).collect(Collectors.toList());
 
-            // todo 封装
+            CreateTableRel createTableRel =  CreateTableRel.builder()
+                    .scheduleId(nodeExecuteHistory.getScheduleId())
+                    .scheduleSnapshotId(nodeExecuteHistory.getScheduleSnapshotId())
+                    .scheduleTopologyNodeId(nodeExecuteHistory.getScheduleTopologyNodeId())
+                    .table(tableName)
+                    .columns(columnInfos)
+                    .build();
+
+
+
         } else if (sqlNode instanceof SqlCreateView) {
 
             // view 信息
@@ -296,9 +302,18 @@ public class FlinkLineageAnalysisUtils {
                 SqlSelect sqlSelect = (SqlSelect) ((SqlWith) source).body;
                 SelectRel selectRel = new SelectRel();
                 parseSelectNode(sqlSelect, selectRel);
-
-
+            } else if (source instanceof SqlSelect) {
+                // 2. insert + select
+                // INSERT OVERWRITE other SELECT a FROM t
+                SelectRel selectRel = new SelectRel();
+                parseSelectNode(source, selectRel);
+            } else {
+                throw new FlinkSqlParseException(String.format("当前INSERT后的主体类型未知,类型为:%s", source.getKind().lowerName));
             }
+
+            // todo 封装
+
+
         }
     }
 
